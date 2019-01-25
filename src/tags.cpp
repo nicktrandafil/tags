@@ -531,14 +531,19 @@ void Tags::completion(std::vector<QString> const& completions) {
 
 
 void Tags::tags(std::vector<QString> const& tags) {
-    impl->tags.clear();
-    std::transform(tags.begin(), tags.end(), std::back_inserter(impl->tags),
+    std::vector<Tag> t{Tag()};
+    std::transform(tags.begin(), tags.end(), std::back_inserter(t),
                    [](QString const& text) {
         return Tag{text, QRect()};
     });
+    impl->tags = std::move(t);
+    impl->editing_index = 0;
+    impl->cursor = 0;
+
     impl->appendTag();
     impl->updateDisplayText();
     impl->calcRects();
+
     update();
 }
 
