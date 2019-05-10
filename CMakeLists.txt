@@ -41,7 +41,7 @@ add_library(
     src/tags.cpp
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 AUTOMOC ON)
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC

@@ -22,25 +22,20 @@
   SOFTWARE.
 */
 
-
 #pragma once
 
-
-// qt
 #include <QWidget>
 
-// std
 #include <memory>
 #include <vector>
 
-
-// fwd
 class QStyleOptionFrame;
-
 
 /// Tag editor widget
 /// `Space` commits a tag and initiates a new tag edition
 class Tags : public QWidget {
+    Q_OBJECT
+
 public:
     explicit Tags(QWidget* parent = nullptr);
     ~Tags() override;
@@ -58,9 +53,12 @@ public:
     /// Get tags
     std::vector<QString> tags() const;
 
+signals:
+    void tagsEdited();
+
 protected:
     // QWidget
-    void paintEvent(QPaintEvent* event) override; 
+    void paintEvent(QPaintEvent* event) override;
     void timerEvent(QTimerEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
