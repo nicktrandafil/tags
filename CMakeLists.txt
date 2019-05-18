@@ -28,9 +28,18 @@ endif()
 # 3rd party
 
 if(NOT ${PROJECT_NAME}_sub)
-    find_package(Qt5Widgets QUIET REQUIRED)
+    find_package(Qt5Widgets 5.9.5 QUIET REQUIRED)
 endif()
 
+if(NOT TARGET Qt5::Widgets)
+    message(FATAL_ERROR "Qt5::Widgets is required dependency")
+endif()
+if(NOT TARGET Qt5::GuiPrivate)
+    message(FATAL_ERROR "Qt5::GuiPrivate is required dependency (consider installing qtbase5-private-dev on Ubuntu)")
+endif()
+if(Qt5Widgets_VERSION VERSION_LESS 5.9.5)
+    message(FATAL_ERROR "Minimum supported Qt5 version is 5.9.5")
+endif()
 
 # Target
 
