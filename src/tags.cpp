@@ -130,6 +130,17 @@ struct Tags::Impl {
         option->features = QStyleOptionFrame::None;
     }
 
+    inline QRectF crossRect(QRectF const& r) const {
+        QRectF cross(QPointF{0, 0}, QSizeF{tag_cross_width, tag_cross_width});
+        cross.moveCenter(QPointF(r.right() - tag_cross_width, r.center().y()));
+        return cross;
+    }
+
+    bool inCrossArea(size_t tag_index, QPoint const& point) const {
+        return crossRect(tags[tag_index].rect).adjusted(-2, 0, 0, 0).translated(-hscroll, 0).contains(point) &&
+               (!cursorVisible() || tag_index != editing_index);
+    }
+
     template <class It>
     void drawTags(QPainter& p, std::pair<It, It> range) const {
         for (auto it = range.first; it != range.second; ++it) {
@@ -149,8 +160,7 @@ struct Tags::Impl {
             p.drawText(text_pos, it->text);
 
             // calc cross rect
-            QRectF i_cross_r(QPointF{0, 0}, QSizeF{tag_cross_width, tag_cross_width});
-            i_cross_r.moveCenter(QPointF(i_r.right() - tag_cross_width, i_r.center().y()));
+            auto const i_cross_r = crossRect(i_r);
 
             QPen pen = p.pen();
             pen.setWidth(2);
@@ -274,7 +284,7 @@ struct Tags::Impl {
         return tags[editing_index].rect;
     }
 
-    void appendTag() {
+    void editNewTag() {
         tags.push_back(Tag());
         setEditingIndex(tags.size() - 1);
         moveCursor(0, false);
@@ -417,6 +427,7 @@ Tags::Tags(QWidget* parent)
     setFocusPolicy(Qt::StrongFocus);
     setCursor(Qt::IBeamCursor);
     setAttribute(Qt::WA_InputMethodEnabled, true);
+    setMouseTracking(true);
 
     impl->setupCompleter();
     impl->setCursorVisible(hasFocus());
@@ -498,6 +509,15 @@ void Tags::timerEvent(QTimerEvent* event) {
 void Tags::mousePressEvent(QMouseEvent* event) {
     bool found = false;
     for (size_t i = 0; i < impl->tags.size(); ++i) {
+        if (impl->inCrossArea(i, event->pos())) {
+            impl->tags.erase(impl->tags.begin() + std::ptrdiff_t(i));
+            if (i <= impl->editing_index) {
+                --impl->editing_index;
+            }
+            found = true;
+            break;
+        }
+
         if (!impl->tags[i].rect.translated(-impl->hscroll, 0).contains(event->pos())) {
             continue;
         }
@@ -507,18 +527,15 @@ void Tags::mousePressEvent(QMouseEvent* event) {
                                  (event->pos() - impl->currentRect().translated(-impl->hscroll, 0).topLeft()).x()),
                              false);
         } else {
-            impl->setEditingIndex(i);
-            impl->moveCursor(impl->currentText().size(), false);
+            impl->editTag(i);
         }
 
         found = true;
-        event->accept();
-
         break;
     }
 
     if (!found) {
-        impl->appendTag();
+        impl->editNewTag();
         event->accept();
     }
 
@@ -664,7 +681,7 @@ void Tags::tags(std::vector<QString> const& tags) {
     impl->editing_index = 0;
     impl->moveCursor(0, false);
 
-    impl->appendTag();
+    impl->editNewTag();
     impl->updateDisplayText();
     impl->calcRects();
 
@@ -680,4 +697,14 @@ std::vector<QString> Tags::tags() const {
                        return tag.text;
                    });
     return ret;
+}
+
+void Tags::mouseMoveEvent(QMouseEvent* event) {
+    for (size_t i = 0; i < impl->tags.size(); ++i) {
+        if (impl->inCrossArea(i, event->pos())) {
+            setCursor(Qt::ArrowCursor);
+            return;
+        }
+    }
+    setCursor(Qt::IBeamCursor);
 }

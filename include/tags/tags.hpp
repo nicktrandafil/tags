@@ -65,6 +65,7 @@ protected:
     void focusInEvent(QFocusEvent* event) override;
     void focusOutEvent(QFocusEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
 
 private:
     struct Impl;
