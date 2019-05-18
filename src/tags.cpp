@@ -361,25 +361,40 @@ struct Tags::Impl {
         if (width_used <= rect.width()) {
             // text fit
             hscroll = 0;
-            qDebug() << "!!!1";
         } else if (cix - hscroll >= rect.width()) {
             // text doesn't fit, cursor is to the right of lineRect (scroll right)
             hscroll = cix - rect.width() + 1;
-            qDebug() << "!!!2";
         } else if (cix - hscroll < 0 && hscroll < width_used) {
             // text doesn't fit, cursor is to the left of lineRect (scroll left)
             hscroll = cix;
-            qDebug() << "!!!3";
         } else if (width_used - hscroll < rect.width()) {
             // text doesn't fit, text document is to the left of lineRect; align
             // right
             hscroll = width_used - rect.width() + 1;
-            qDebug() << "!!!4";
         } else {
             //in case the text is bigger than the lineedit, the hscroll can never be negative
             hscroll = qMax(0, hscroll);
-            qDebug() << "!!!5";
         }
+    }
+
+    void editPreviousTag() {
+        if (editing_index > 0) {
+            setEditingIndex(editing_index - 1);
+            moveCursor(currentText().size(), false);
+        }
+    }
+
+    void editNextTag() {
+        if (editing_index < tags.size() - 1) {
+            setEditingIndex(editing_index + 1);
+            moveCursor(0, false);
+        }
+    }
+
+    void editTag(size_t i) {
+        assert(i >= 0 && i < tags.size());
+        setEditingIndex(i);
+        moveCursor(currentText().size(), false);
     }
 
     Tags* const ifce;
@@ -553,35 +568,49 @@ void Tags::keyPressEvent(QKeyEvent* event) {
     } else {
         switch (event->key()) {
         case Qt::Key_Left:
-            impl->moveCursor(impl->text_layout.previousCursorPosition(impl->cursor), false);
+            if (impl->cursor == 0) {
+                impl->editPreviousTag();
+            } else {
+                impl->moveCursor(impl->text_layout.previousCursorPosition(impl->cursor), false);
+            }
             event->accept();
             break;
         case Qt::Key_Right:
-            impl->moveCursor(impl->text_layout.nextCursorPosition(impl->cursor), false);
+            if (impl->cursor == impl->currentText().size()) {
+                impl->editNextTag();
+            } else {
+                impl->moveCursor(impl->text_layout.nextCursorPosition(impl->cursor), false);
+            }
             event->accept();
             break;
         case Qt::Key_Home:
-            impl->moveCursor(0, false);
+            if (impl->cursor == 0) {
+                impl->editTag(0);
+            } else {
+                impl->moveCursor(0, false);
+            }
             event->accept();
             break;
         case Qt::Key_End:
-            impl->moveCursor(impl->currentText().length(), false);
+            if (impl->cursor == impl->currentText().size()) {
+                impl->editTag(impl->tags.size() - 1);
+            } else {
+                impl->moveCursor(impl->currentText().length(), false);
+            }
             event->accept();
             break;
         case Qt::Key_Backspace:
             if (!impl->currentText().isEmpty()) {
                 impl->removeBackwardOne();
             } else if (impl->editing_index > 0) {
-                impl->setEditingIndex(impl->editing_index - 1);
-                impl->moveCursor(impl->currentText().size(), false);
+                impl->editPreviousTag();
             }
             event->accept();
             break;
         case Qt::Key_Space:
             if (!impl->currentText().isEmpty()) {
                 impl->tags.insert(impl->tags.begin() + std::ptrdiff_t(impl->editing_index + 1), Tag());
-                impl->setEditingIndex(impl->editing_index + 1);
-                impl->moveCursor(0, false);
+                impl->editNextTag();
             }
             event->accept();
             break;
