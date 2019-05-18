@@ -33,6 +33,8 @@
 #include <QTextLayout>
 #include <QtGui/private/qinputcontrol_p.h>
 
+#include <cassert>
+
 namespace {
 
 constexpr int verticalMargin = 3;
@@ -475,7 +477,7 @@ QSize Tags::sizeHint() const {
     ensurePolished();
     QFontMetrics fm(font());
     int h = fm.height() + 2 * verticalMargin + topTextMargin + bottomTextMargin + topmargin + bottommargin;
-    int w = fm.horizontalAdvance(QLatin1Char('x')) * 17 + 2 * horizontalMargin + leftmargin + rightmargin; // "some"
+    int w = fm.boundingRect(QLatin1Char('x')).width() * 17 + 2 * horizontalMargin + leftmargin + rightmargin; // "some"
     QStyleOptionFrame opt;
     impl->initStyleOption(&opt);
     return (style()->sizeFromContents(QStyle::CT_LineEdit, &opt,
