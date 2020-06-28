@@ -28,6 +28,7 @@
 #include <QCompleter>
 #include <QDebug>
 #include <QPainter>
+#include <QPainterPath>
 #include <QStyle>
 #include <QStyleHints>
 #include <QStyleOptionFrame>
