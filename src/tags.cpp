@@ -37,6 +37,12 @@
 
 #include <cassert>
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
+#define FONT_METRICS_WIDTH(fmt, ...) fmt.width(__VA_ARGS__)
+#else
+#define FONT_METRICS_WIDTH(fmt, ...) fmt.horizontalAdvance(__VA_ARGS__)
+#endif
+
 namespace {
 
 constexpr int top_text_margin = 1;
@@ -105,6 +111,9 @@ private:
     It it;
     It end;
 };
+
+template <class It>
+EmptySkipIterator(It, It) -> EmptySkipIterator<It>;
 
 } // namespace
 
@@ -200,7 +209,7 @@ struct Tags::Impl {
     void calcRects(QPoint& lt, int height, std::pair<It, It> range) {
         for (auto it = range.first; it != range.second; ++it) {
             // calc text rect
-            const auto i_width = ifce->fontMetrics().width(it->text);
+            const auto i_width = FONT_METRICS_WIDTH(ifce->fontMetrics(), it->text);
             QRect i_r(lt, QSize(i_width, height));
             i_r.translate(tag_inner_left_padding, 0);
             i_r.adjust(-tag_inner_left_padding, 0,
@@ -211,7 +220,7 @@ struct Tags::Impl {
     }
 
     void calcEditorRect(QPoint& lt, int height) {
-        auto const w = ifce->fontMetrics().width(text_layout.text()) +
+        auto const w = FONT_METRICS_WIDTH(ifce->fontMetrics(), text_layout.text()) +
                        tag_inner_left_padding + tag_inner_right_padding;
         currentRect() = QRect(lt, QSize(w, height));
         lt += QPoint(w + tag_spacing, 0);
