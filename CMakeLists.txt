@@ -38,7 +38,9 @@ add_library(
     ${PROJECT_NAME}
 
     include/${PROJECT_NAME}/tags.hpp
+    include/${PROJECT_NAME}/tags_area.hpp
     src/tags.cpp
+    src/tags_area.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 AUTOMOC ON)

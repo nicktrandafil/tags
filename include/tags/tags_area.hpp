@@ -29,18 +29,19 @@
 #include <memory>
 #include <vector>
 
-/// Tag line editor widget
+/// Tag multi-line editor widget
 /// `Space` commits a tag and initiates a new tag edition
-class Tags : public QWidget {
+class TagsArea : public QWidget {
     Q_OBJECT
 
 public:
-    explicit Tags(QWidget* parent = nullptr);
-    ~Tags() override;
+    explicit TagsArea(QWidget* parent = nullptr);
+    ~TagsArea() override;
 
     // QWidget
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
+    int heightForWidth(int w) const override;
 
     /// Set completions
     void completion(std::vector<QString> const& completions);
