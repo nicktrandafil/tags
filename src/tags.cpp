@@ -376,7 +376,7 @@ struct Tags::Impl {
 
     void calcHScroll(QRect const& r) {
         auto const rect = cRect();
-        auto const width_used = qRound(natrualWidth()) + 1;
+        auto const width_used = qRound(natrualWidth()) + 1; // FIXME From where 1?
         int const cix = r.x() + qRound(cursorToX());
         if (width_used <= rect.width()) {
             // text fit

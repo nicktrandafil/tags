@@ -24,14 +24,14 @@
 
 #pragma once
 
-#include <QWidget>
+#include <QAbstractScrollArea>
 
 #include <memory>
 #include <vector>
 
 /// Tag multi-line editor widget
 /// `Space` commits a tag and initiates a new tag edition
-class TagsArea : public QWidget {
+class TagsArea : public QAbstractScrollArea {
     Q_OBJECT
 
 public:
