@@ -25,9 +25,6 @@ endif()
 if(NOT TARGET Qt5::Widgets)
     message(FATAL_ERROR "Qt5::Widgets is required dependency")
 endif()
-if(NOT TARGET Qt5::GuiPrivate)
-    message(FATAL_ERROR "Qt5::GuiPrivate is required dependency (consider installing qtbase5-private-dev on Ubuntu)")
-endif()
 if(Qt5Widgets_VERSION VERSION_LESS 5.9.5)
     message(FATAL_ERROR "Minimum supported Qt5 version is 5.9.5")
 endif()
@@ -56,7 +53,7 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets Qt5::GuiPrivate)
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets)
 
 # compile options/definitions
 if(NOT ${PROJECT_NAME}_sub)
