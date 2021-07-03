@@ -66,6 +66,8 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
 
 private:
+    bool isAcceptableInput(const QKeyEvent* event) const;
+
     struct Impl;
     std::unique_ptr<Impl> impl;
 };

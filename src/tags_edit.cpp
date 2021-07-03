@@ -34,7 +34,6 @@
 #include <QStyleHints>
 #include <QStyleOptionFrame>
 #include <QTextLayout>
-#include <QtGui/private/qinputcontrol_p.h>
 
 #include <cassert>
 
@@ -124,7 +123,6 @@ struct TagsEdit::Impl {
           blink_status(true),
           select_start(0),
           select_size(0),
-          ctrl(QInputControl::LineEdit),
           completer(std::make_unique<QCompleter>()) {}
 
     inline QRectF crossRect(QRectF const& r) const {
@@ -497,7 +495,6 @@ struct TagsEdit::Impl {
     QTextLayout text_layout;
     int select_start;
     int select_size;
-    QInputControl ctrl;
     std::unique_ptr<QCompleter> completer;
     int hscroll{0};
 };
@@ -738,7 +735,7 @@ void TagsEdit::keyPressEvent(QKeyEvent* event) {
         }
     }
 
-    if (unknown && impl->ctrl.isAcceptableInput(event)) {
+    if (unknown && isAcceptableInput(event)) {
         if (impl->hasSelection()) { impl->removeSelection(); }
         impl->currentText().insert(impl->cursor, event->text());
         impl->cursor = impl->cursor + event->text().length();
@@ -810,4 +807,31 @@ void TagsEdit::mouseMoveEvent(QMouseEvent* event) {
     } else {
         QAbstractScrollArea::mouseMoveEvent(event);
     }
+}
+
+bool TagsEdit::isAcceptableInput(const QKeyEvent* event) const
+{
+    const QString text = event->text();
+    if (text.isEmpty())
+        return false;
+
+    const QChar c = text.at(0);
+
+    // Formatting characters such as ZWNJ, ZWJ, RLM, etc. This needs to go before the
+    // next test, since CTRL+SHIFT is sometimes used to input it on Windows.
+    if (c.category() == QChar::Other_Format)
+        return true;
+
+    // QTBUG-35734: ignore Ctrl/Ctrl+Shift; accept only AltGr (Alt+Ctrl) on German keyboards
+    if (event->modifiers() == Qt::ControlModifier || event->modifiers() == (Qt::ShiftModifier | Qt::ControlModifier)) {
+        return false;
+    }
+
+    if (c.isPrint())
+        return true;
+
+    if (c.category() == QChar::Other_PrivateUse)
+        return true;
+
+    return false;
 }
