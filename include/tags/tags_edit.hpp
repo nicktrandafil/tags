@@ -31,12 +31,12 @@
 
 /// Tag multi-line editor widget
 /// `Space` commits a tag and initiates a new tag edition
-class TagsArea : public QAbstractScrollArea {
+class TagsEdit : public QAbstractScrollArea {
     Q_OBJECT
 
 public:
-    explicit TagsArea(QWidget* parent = nullptr);
-    ~TagsArea() override;
+    explicit TagsEdit(QWidget* parent = nullptr);
+    ~TagsEdit() override;
 
     // QWidget
     QSize sizeHint() const override;
@@ -67,6 +67,8 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
 
 private:
+    bool isAcceptableInput(QKeyEvent const* event) const;
+
     struct Impl;
     std::unique_ptr<Impl> impl;
 };

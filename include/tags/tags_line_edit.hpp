@@ -31,12 +31,12 @@
 
 /// Tag line editor widget
 /// `Space` commits a tag and initiates a new tag edition
-class Tags : public QWidget {
+class TagsLineEdit : public QWidget {
     Q_OBJECT
 
 public:
-    explicit Tags(QWidget* parent = nullptr);
-    ~Tags() override;
+    explicit TagsLineEdit(QWidget* parent = nullptr);
+    ~TagsLineEdit() override;
 
     // QWidget
     QSize sizeHint() const override;
