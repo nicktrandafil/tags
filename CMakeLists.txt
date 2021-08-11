@@ -37,10 +37,10 @@ endif()
 add_library(
     ${PROJECT_NAME}
 
-    include/${PROJECT_NAME}/tags_line_edit.hpp
-    include/${PROJECT_NAME}/tags_edit.hpp
-    src/tags_line_edit.cpp
-    src/tags_edit.cpp
+    include/${PROJECT_NAME}/TagsLineEdit.h
+    include/${PROJECT_NAME}/TagsEdit.h
+    src/TagsLineEdit.cpp
+    src/TagsEdit.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 AUTOMOC ON)
