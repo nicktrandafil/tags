@@ -337,7 +337,7 @@ struct TagsEdit::Impl {
 
     void editNewTag(size_t i) {
         tags.insert(std::next(begin(tags), static_cast<std::ptrdiff_t>(i)), Tag());
-        if (editing_index >= i) {
+        if (editing_index <= i) {
             ++editing_index;
         }
         setEditingIndex(i);
@@ -781,7 +781,7 @@ void TagsEdit::tags(std::vector<QString> const& tags) {
                        return Tag{text, QRect(), 0};
                    });
     impl->tags = std::move(t);
-    impl->editNewTag(impl->tags.size());
+    impl->editing_index = impl->tags.size() - 1;
     impl->updateDisplayText();
     impl->calcRectsAndUpdateScrollRanges();
     viewport()->update();
