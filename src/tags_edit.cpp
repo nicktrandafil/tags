@@ -54,6 +54,10 @@ constexpr int tag_cross_width = 4;
 constexpr int tag_cross_spacing = 2;
 
 struct Tag {
+    bool isEmpty() const noexcept {
+        return text.isEmpty();
+    }
+
     QString text;
     QRect rect;
     size_t row;
@@ -66,13 +70,16 @@ struct EmptySkipIterator {
 
     // skip until `end`
     explicit EmptySkipIterator(It it, It end) : it(it), end(end) {
-        while (this->it != end && this->it->text.isEmpty()) {
+        while (this->it != end && this->it->isEmpty()) {
             ++this->it;
         }
         begin = it;
     }
 
-    explicit EmptySkipIterator(It it) : it(it) {}
+    explicit EmptySkipIterator(It it)
+            : it(it)
+            , end{} {
+    }
 
     using difference_type = typename std::iterator_traits<It>::difference_type;
     using value_type = typename std::iterator_traits<It>::value_type;
@@ -81,12 +88,13 @@ struct EmptySkipIterator {
     using iterator_category = std::output_iterator_tag;
 
     EmptySkipIterator& operator++() {
-        while (++it != end && it->text.isEmpty())
+        assert(it != end);
+        while (++it != end && it->isEmpty())
             ;
         return *this;
     }
 
-    value_type& operator*() {
+    decltype(auto) operator*() {
         return *it;
     }
 
@@ -113,6 +121,8 @@ EmptySkipIterator(It, It) -> EmptySkipIterator<It>;
 
 } // namespace
 
+    // Invariant-1 ensures no empty tags apart from currently being edited.
+    // Default-state is one empty tag which is currently editing.
 struct TagsEdit::Impl {
     explicit Impl(TagsEdit* ifce)
         : ifce(ifce),
@@ -281,11 +291,12 @@ struct TagsEdit::Impl {
         text_layout.endLayout();
     }
 
+    /// Makes the tag at `i` currently editing, and ensures Invariant-1`.
     void setEditingIndex(size_t i) {
-        assert(i <= tags.size());
+        assert(i < tags.size());
         if (currentText().isEmpty()) {
             tags.erase(std::next(tags.begin(), std::ptrdiff_t(editing_index)));
-            if (editing_index <= i) {
+            if (editing_index <= i) { // Do we shift positions after `i`?
                 --i;
             }
         }
@@ -333,6 +344,8 @@ struct TagsEdit::Impl {
         return tags[editing_index].rect;
     }
 
+    // Inserts a new tag at `i`, makes the tag currently editing,
+    // and ensures Invariant-1.
     void editNewTag(size_t i) {
         tags.insert(std::next(begin(tags), static_cast<std::ptrdiff_t>(i)), Tag());
         if (editing_index >= i) {
@@ -772,11 +785,18 @@ void TagsEdit::completion(std::vector<QString> const& completions) {
 }
 
 void TagsEdit::tags(std::vector<QString> const& tags) {
+    // Set to Default-state.
+    impl->editing_index = 0;
     std::vector<Tag> t{Tag()};
-    std::transform(tags.begin(), tags.end(), std::back_inserter(t),
-                   [](QString const& text) {
-                       return Tag{text, QRect(), 0};
-                   });
+
+    std::transform(
+            EmptySkipIterator(tags.begin(), tags.end()), // Ensure Invariant-1
+            EmptySkipIterator(tags.end()),
+            std::back_inserter(t),
+            [](QString const& text) {
+                return Tag{text, QRect(), 0};
+            });
+
     impl->tags = std::move(t);
     impl->editNewTag(impl->tags.size());
     impl->updateDisplayText();
