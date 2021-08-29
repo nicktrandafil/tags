@@ -27,7 +27,7 @@
 #include <QWidget>
 
 #include <memory>
-#include <vector>
+#include <QStringList>
 
 /// Tag line editor widget
 /// `Space` commits a tag and initiates a new tag edition
@@ -43,13 +43,13 @@ public:
     QSize minimumSizeHint() const override;
 
     /// Set completions
-    void completion(std::vector<QString> const& completions);
+    void completion(QStringList const& completions);
 
     /// Set tags
-    void tags(std::vector<QString> const& tags);
+    void tags(QStringList const& tags);
 
     /// Get tags
-    std::vector<QString> tags() const;
+    QStringList tags() const;
 
 signals:
     void tagsEdited();

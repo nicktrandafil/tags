@@ -27,6 +27,7 @@
 #include <QApplication>
 #include <QCompleter>
 #include <QDebug>
+#include <QList>
 #include <QPainter>
 #include <QPainterPath>
 #include <QStyle>
@@ -144,7 +145,7 @@ struct TagsLineEdit::Impl {
         return cross;
     }
 
-    bool inCrossArea(size_t tag_index, QPoint const& point) const {
+    bool inCrossArea(int tag_index, QPoint const& point) const {
         return crossRect(tags[tag_index].rect).adjusted(-2, 0, 0, 0).translated(-hscroll, 0).contains(point) &&
                (!cursorVisible() || tag_index != editing_index);
     }
@@ -257,7 +258,7 @@ struct TagsLineEdit::Impl {
         text_layout.endLayout();
     }
 
-    void setEditingIndex(size_t i) {
+    void setEditingIndex(int i) {
         assert(i <= tags.size());
         if (currentText().isEmpty()) {
             tags.erase(std::next(tags.begin(), std::ptrdiff_t(editing_index)));
@@ -409,15 +410,15 @@ struct TagsLineEdit::Impl {
         }
     }
 
-    void editTag(size_t i) {
+    void editTag(int i) {
         assert(i >= 0 && i < tags.size());
         setEditingIndex(i);
         moveCursor(currentText().size(), false);
     }
 
     TagsLineEdit* const ifce;
-    std::vector<Tag> tags;
-    size_t editing_index;
+    QList<Tag> tags;
+    int editing_index;
     int cursor;
     int blink_timer;
     bool blink_status;
@@ -515,7 +516,7 @@ void TagsLineEdit::timerEvent(QTimerEvent* event) {
 
 void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
     bool found = false;
-    for (size_t i = 0; i < impl->tags.size(); ++i) {
+    for (int i = 0; i < impl->tags.size(); ++i) {
         if (impl->inCrossArea(i, event->pos())) {
             impl->tags.erase(impl->tags.begin() + std::ptrdiff_t(i));
             if (i <= impl->editing_index) {
@@ -666,7 +667,7 @@ void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
     }
 }
 
-void TagsLineEdit::completion(std::vector<QString> const& completions) {
+void TagsLineEdit::completion(QStringList const& completions) {
     impl->completer = std::make_unique<QCompleter>(
         [&] {
             QStringList ret;
@@ -677,8 +678,8 @@ void TagsLineEdit::completion(std::vector<QString> const& completions) {
     impl->setupCompleter();
 }
 
-void TagsLineEdit::tags(std::vector<QString> const& tags) {
-    std::vector<Tag> t{Tag()};
+void TagsLineEdit::tags(QStringList const& tags) {
+    QList<Tag> t{Tag()};
     std::transform(tags.begin(), tags.end(), std::back_inserter(t),
                    [](QString const& text) {
                        return Tag{text, QRect()};
@@ -694,8 +695,8 @@ void TagsLineEdit::tags(std::vector<QString> const& tags) {
     update();
 }
 
-std::vector<QString> TagsLineEdit::tags() const {
-    std::vector<QString> ret;
+QStringList TagsLineEdit::tags() const {
+    QStringList ret;
     std::transform(EmptySkipIterator(impl->tags.begin(), impl->tags.end()),
                    EmptySkipIterator(impl->tags.end()),
                    std::back_inserter(ret),
@@ -706,7 +707,7 @@ std::vector<QString> TagsLineEdit::tags() const {
 }
 
 void TagsLineEdit::mouseMoveEvent(QMouseEvent* event) {
-    for (size_t i = 0; i < impl->tags.size(); ++i) {
+    for (int i = 0; i < impl->tags.size(); ++i) {
         if (impl->inCrossArea(i, event->pos())) {
             setCursor(Qt::ArrowCursor);
             return;

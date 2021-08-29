@@ -27,6 +27,7 @@
 #include <QApplication>
 #include <QCompleter>
 #include <QDebug>
+#include <QList>
 #include <QPainter>
 #include <QPainterPath>
 #include <QScrollBar>
@@ -141,7 +142,7 @@ struct TagsEdit::Impl {
         return cross;
     }
 
-    bool inCrossArea(size_t tag_index, QPoint point) const {
+    bool inCrossArea(int tag_index, QPoint point) const {
         return crossRect(tags[tag_index].rect)
                        .adjusted(-tag_cross_spacing, 0, 0, 0)
                        .translated(-ifce->horizontalScrollBar()->value(), -ifce->verticalScrollBar()->value())
@@ -187,17 +188,17 @@ struct TagsEdit::Impl {
         return ifce->viewport()->contentsRect();
     }
 
-    QRect calcRects(std::vector<Tag>& tags) const {
+    QRect calcRects(QList<Tag>& tags) const {
         return calcRects(tags, contentsRect());
     }
 
-    QRect calcRects(std::vector<Tag>& tags, QRect r) const {
+    QRect calcRects(QList<Tag>& tags, QRect r) const {
         size_t row = 0;
         auto lt = r.topLeft();
         QFontMetrics fm = ifce->fontMetrics();
 
-        auto const b = begin(tags);
-        auto const e = end(tags);
+        auto const b = std::begin(tags);
+        auto const e = std::end(tags);
         if (cursorVisible()) {
             auto const m = b + static_cast<std::ptrdiff_t>(editing_index);
             calcRects(lt, row, r, fm, std::make_pair(b, m));
@@ -292,7 +293,7 @@ struct TagsEdit::Impl {
     }
 
     /// Makes the tag at `i` currently editing, and ensures Invariant-1`.
-    void setEditingIndex(size_t i) {
+    void setEditingIndex(int i) {
         assert(i < tags.size());
         if (currentText().isEmpty()) {
             tags.erase(std::next(tags.begin(), std::ptrdiff_t(editing_index)));
@@ -305,7 +306,7 @@ struct TagsEdit::Impl {
 
     void calcRectsAndUpdateScrollRanges() {
         auto const row = tags.back().row;
-        auto const max_width = std::max_element(begin(tags), end(tags), [](auto const& x, auto const& y) {
+        auto const max_width = std::max_element(std::begin(tags), std::end(tags), [](auto const& x, auto const& y) {
                                    return x.rect.width() < y.rect.width();
                                })->rect.width();
 
@@ -315,7 +316,7 @@ struct TagsEdit::Impl {
             updateVScrollRange();
         }
 
-        auto const new_max_width = std::max_element(begin(tags), end(tags), [](auto const& x, auto const& y) {
+        auto const new_max_width = std::max_element(std::begin(tags), std::end(tags), [](auto const& x, auto const& y) {
                                        return x.rect.width() < y.rect.width();
                                    })->rect.width();
 
@@ -346,8 +347,8 @@ struct TagsEdit::Impl {
 
     // Inserts a new tag at `i`, makes the tag currently editing,
     // and ensures Invariant-1.
-    void editNewTag(size_t i) {
-        tags.insert(std::next(begin(tags), static_cast<std::ptrdiff_t>(i)), Tag());
+    void editNewTag(int i) {
+        tags.insert(std::next(std::begin(tags), static_cast<std::ptrdiff_t>(i)), Tag());
         if (editing_index >= i) {
             ++editing_index;
         }
@@ -439,7 +440,7 @@ struct TagsEdit::Impl {
         }
     }
 
-    void editTag(size_t i) {
+    void editTag(int i) {
         assert(i >= 0 && i < tags.size());
         setEditingIndex(i);
         moveCursor(currentText().size(), false);
@@ -459,7 +460,7 @@ struct TagsEdit::Impl {
     }
 
     void updateHScrollRange() {
-        auto const max_width = std::max_element(begin(tags), end(tags), [](auto const& x, auto const& y) {
+        auto const max_width = std::max_element(std::begin(tags), std::end(tags), [](auto const& x, auto const& y) {
                                    return x.rect.width() < y.rect.width();
                                })->rect.width();
         updateHScrollRange(max_width);
@@ -500,8 +501,8 @@ struct TagsEdit::Impl {
     }
 
     TagsEdit* const ifce;
-    std::vector<Tag> tags;
-    size_t editing_index;
+    QList<Tag> tags;
+    int editing_index;
     int cursor;
     int blink_timer;
     bool blink_status;
@@ -596,7 +597,7 @@ void TagsEdit::timerEvent(QTimerEvent* event) {
 
 void TagsEdit::mousePressEvent(QMouseEvent* event) {
     bool found = false;
-    for (size_t i = 0; i < impl->tags.size(); ++i) {
+    for (int i = 0; i < impl->tags.size(); ++i) {
         if (impl->inCrossArea(i, event->pos())) {
             impl->tags.erase(impl->tags.begin() + std::ptrdiff_t(i));
             if (i <= impl->editing_index) {
@@ -630,7 +631,7 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
     }
 
     if (!found) {
-        for (auto it = begin(impl->tags); it != end(impl->tags); ++it) {
+        for (auto it = std::begin(impl->tags); it != std::end(impl->tags); ++it) {
             // Click of a row.
             if (it->rect.translated(-horizontalScrollBar()->value(), -verticalScrollBar()->value()).bottom()
                 < event->pos().y()) {
@@ -639,11 +640,11 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
 
             // Last tag of the row.
             auto const row = it->row;
-            while (it->row == row && it != end(impl->tags)) {
+            while (it->row == row && it != std::end(impl->tags)) {
                 ++it;
             }
 
-            impl->editNewTag(static_cast<size_t>(std::distance(begin(impl->tags), it)));
+            impl->editNewTag(static_cast<int>(std::distance(std::begin(impl->tags), it)));
             break;
         }
 
@@ -773,7 +774,7 @@ void TagsEdit::keyPressEvent(QKeyEvent* event) {
     }
 }
 
-void TagsEdit::completion(std::vector<QString> const& completions) {
+void TagsEdit::completion(QStringList const& completions) {
     impl->completer = std::make_unique<QCompleter>(
         [&] {
             QStringList ret;
@@ -784,10 +785,10 @@ void TagsEdit::completion(std::vector<QString> const& completions) {
     impl->setupCompleter();
 }
 
-void TagsEdit::tags(std::vector<QString> const& tags) {
+void TagsEdit::tags(QStringList const& tags) {
     // Set to Default-state.
     impl->editing_index = 0;
-    std::vector<Tag> t{Tag()};
+    QList<Tag> t{Tag()};
 
     std::transform(
             EmptySkipIterator(tags.begin(), tags.end()), // Ensure Invariant-1
@@ -804,8 +805,8 @@ void TagsEdit::tags(std::vector<QString> const& tags) {
     viewport()->update();
 }
 
-std::vector<QString> TagsEdit::tags() const {
-    std::vector<QString> ret;
+QStringList TagsEdit::tags() const {
+    QStringList ret;
     std::transform(EmptySkipIterator(impl->tags.begin(), impl->tags.end()),
                    EmptySkipIterator(impl->tags.end()),
                    std::back_inserter(ret),
@@ -816,7 +817,7 @@ std::vector<QString> TagsEdit::tags() const {
 }
 
 void TagsEdit::mouseMoveEvent(QMouseEvent* event) {
-    for (size_t i = 0; i < impl->tags.size(); ++i) {
+    for (int i = 0; i < impl->tags.size(); ++i) {
         if (impl->inCrossArea(i, event->pos())) {
             viewport()->setCursor(Qt::ArrowCursor);
             return;
