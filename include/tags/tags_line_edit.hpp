@@ -29,6 +29,8 @@
 #include <memory>
 #include <vector>
 
+namespace yenxo_widgets {
+
 /// Tag line editor widget
 /// `Space` commits a tag and initiates a new tag edition
 class TagsLineEdit : public QWidget {
@@ -66,8 +68,8 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
 
 private:
-    bool isAcceptableInput(const QKeyEvent* event) const;
-
     struct Impl;
     std::unique_ptr<Impl> impl;
 };
+
+} // namespace yenxo_widgets

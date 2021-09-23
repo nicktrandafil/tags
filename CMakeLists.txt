@@ -36,8 +36,9 @@ add_library(
 
     include/${PROJECT_NAME}/tags_line_edit.hpp
     include/${PROJECT_NAME}/tags_edit.hpp
-    src/tags_line_edit.cpp
     src/tags_edit.cpp
+    src/tags_impl.hpp
+    src/tags_line_edit.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 AUTOMOC ON)

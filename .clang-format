@@ -1,5 +1,4 @@
 Language:        Cpp
-# BasedOnStyle:  LLVM
 AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: false
@@ -53,18 +52,20 @@ DerivePointerAlignment: false
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
-ForEachMacros:
-  - foreach
-  - Q_FOREACH
-  - BOOST_FOREACH
 IncludeBlocks:   Regroup
 IncludeCategories:
-  - Regex:           '^<Q.*'
-    Priority:        2
-  - Regex:           '^<tags/.*hpp>$'
+# Local
+  - Regex:           '^".+"$'
     Priority:        1
-  - Regex:           '^.*$'
+# Interface
+  - Regex:           '^<tags/.*hpp>$'
+    Priority:        2
+# Qt
+  - Regex:           '^<Q.*'
     Priority:        3
+# std
+  - Regex:           '.*'
+    Priority:        4
 IncludeIsMainRegex: '(Test)?$'
 IndentCaseLabels: false
 IndentPPDirectives: None
