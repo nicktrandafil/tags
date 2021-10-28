@@ -37,7 +37,8 @@ class TagsEdit : public QAbstractScrollArea {
     Q_OBJECT
 
 public:
-    explicit TagsEdit(QWidget* parent = nullptr);
+    /// \param unique Ensure tags uniqueness
+    explicit TagsEdit(bool unique = true, QWidget* parent = nullptr);
     ~TagsEdit() override;
 
     // QWidget

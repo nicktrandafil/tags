@@ -37,7 +37,8 @@ class TagsLineEdit : public QWidget {
     Q_OBJECT
 
 public:
-    explicit TagsLineEdit(QWidget* parent = nullptr);
+    /// \param unique Ensure tags uniqueness
+    explicit TagsLineEdit(bool unique = true, QWidget* parent = nullptr);
     ~TagsLineEdit() override;
 
     // QWidget

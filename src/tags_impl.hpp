@@ -49,9 +49,14 @@ struct Tag {
 };
 
 // Invariant-1 ensures no empty tags apart from currently being edited.
+// Invariant-2 ensures tags uniqueness.
 // Default-state is one empty tag which is currently editing.
 template <class Derived>
 struct TagsImpl {
+    explicit TagsImpl(bool unique)
+            : unique(unique) {
+    }
+
     Derived const& self() const noexcept {
         return static_cast<Derived const&>(*this);
     }
@@ -170,10 +175,21 @@ struct TagsImpl {
         text_layout.endLayout();
     }
 
+    bool isCurrentTagADuplicate() const {
+        assert(editing_index < tags.size());
+        auto const mid =
+                tags.begin() + static_cast<std::ptrdiff_t>(editing_index);
+        auto const text_eq = [this](auto const& x) {
+            return x.text == currentText();
+        };
+        return std::find_if(tags.begin(), mid, text_eq) != mid
+            || std::find_if(mid + 1, tags.end(), text_eq) != tags.end();
+    }
+
     /// Makes the tag at `i` currently editing, and ensures Invariant-1`.
     void setEditingIndex(size_t i) {
         assert(i < tags.size());
-        if (currentText().isEmpty()) {
+        if (currentText().isEmpty() || (unique && isCurrentTagADuplicate())) {
             tags.erase(std::next(begin(tags),
                                  static_cast<std::ptrdiff_t>(editing_index)));
             if (editing_index <= i) { // Did we shift `i`?
@@ -336,6 +352,30 @@ struct TagsImpl {
         cursor = pos;
     }
 
+    void setTags(std::vector<QString> const& tags) {
+        std::vector<Tag> t;
+        t.reserve(tags.size());
+        for (auto const& tag : tags) {
+            if (!tag.isEmpty() // Ensure Invariant-1
+                && (!unique    // Ensure Invariant-2
+                    || std::find_if(t.begin(), t.end(), [tag](auto const& x) {
+                           return x.text == tag;
+                       }) == t.end())) {
+                t.push_back(Tag{tag, QRect()});
+            }
+        }
+        if (t.empty()) { // Ensure Invariant-1
+            t.push_back(Tag{});
+        }
+
+        // Set to Default-state.
+        editing_index = 0;
+        cursor = 0;
+        select_size = 0;
+        select_start = 0;
+        this->tags = std::move(t);
+    }
+
     /// Width of painting from text to the the pill border.
     QMargins const pill_thickness{3, 3, 4, 3};
 
@@ -357,6 +397,8 @@ struct TagsImpl {
     int select_size{0};
 
     std::unique_ptr<QCompleter> completer{std::make_unique<QCompleter>()};
+
+    bool const unique; // Turn on/off Invariant-2
 };
 
 } // namespace yenxo_widgets

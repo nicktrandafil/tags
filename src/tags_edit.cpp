@@ -46,8 +46,9 @@ constexpr int tag_v_spacing = 2;
 } // namespace
 
 struct TagsEdit::Impl : TagsImpl<Impl> {
-    explicit Impl(TagsEdit* ifce)
-            : ifce(ifce) {
+    explicit Impl(TagsEdit* ifce, bool unique_)
+            : TagsImpl<Impl>(unique_)
+            , ifce(ifce) {
     }
 
     // CRTP member function.
@@ -200,9 +201,9 @@ struct TagsEdit::Impl : TagsImpl<Impl> {
     TagsEdit* const ifce;  // CRTP data member.
 };
 
-TagsEdit::TagsEdit(QWidget* parent)
+TagsEdit::TagsEdit(bool unique, QWidget* parent)
         : QAbstractScrollArea(parent)
-        , impl(std::make_unique<Impl>(this)) {
+        , impl(std::make_unique<Impl>(this, unique)) {
     QSizePolicy size_policy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     size_policy.setHeightForWidth(true);
     setSizePolicy(size_policy);
@@ -463,30 +464,9 @@ void TagsEdit::completion(std::vector<QString> const& completions) {
 }
 
 void TagsEdit::tags(std::vector<QString> const& tags) {
-    std::vector<Tag> t(tags.size());
-    std::transform(
-            tags.begin(), tags.end(), t.begin(), [](QString const& text) {
-                return Tag{text, QRect()};
-            });
-
-    // Ensure Invariant-1.
-    t.erase(std::remove_if(t.begin(),
-                           t.end(),
-                           [](auto const& x) { return x.text.isEmpty(); }),
-            t.end());
-    if (t.empty()) {
-        t.push_back(Tag{});
-    }
-
-    // Set to Default-state.
-    impl->editing_index = 0;
-    impl->cursor = 0;
-    impl->select_size = 0;
-    impl->select_start = 0;
-    impl->tags = std::move(t);
+    impl->setTags(tags);
     verticalScrollBar()->setValue(0);
     horizontalScrollBar()->setValue(0);
-
     impl->editNewTag(impl->tags.size());
     impl->updateDisplayText();
     impl->calcRects(impl->tags);
@@ -503,14 +483,12 @@ std::vector<QString> TagsEdit::tags() const {
                    impl->tags.end(),
                    ret.begin(),
                    [](Tag const& tag) { return tag.text; });
-
-    // Invariant-1
-    assert(!ret.empty());
-    if (ret[impl->editing_index].isEmpty()) {
+    assert(!ret.empty()); // Invariant-1
+    if (ret[impl->editing_index].isEmpty()
+        || (impl->unique && impl->isCurrentTagADuplicate())) {
         ret.erase(ret.begin()
                   + static_cast<std::ptrdiff_t>(impl->editing_index));
     }
-
     return ret;
 }
 
