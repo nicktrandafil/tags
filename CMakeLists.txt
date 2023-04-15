@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0022 NEW)
 
-project(tags VERSION 0.1)
+project(everload_tags VERSION 0.1)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-include(tags)
+include(everload_tags)
 
 
 # if inside subdirectory
@@ -34,11 +34,8 @@ endif()
 add_library(
     ${PROJECT_NAME}
 
-    include/${PROJECT_NAME}/tags_line_edit.hpp
-    include/${PROJECT_NAME}/tags_edit.hpp
-    src/tags_edit.cpp
-    src/tags_impl.hpp
-    src/tags_line_edit.cpp
+    include/${PROJECT_NAME}/tags.hpp
+    src/tags.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 AUTOMOC ON)

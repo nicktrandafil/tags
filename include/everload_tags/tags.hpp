@@ -29,17 +29,20 @@
 #include <memory>
 #include <vector>
 
-namespace yenxo_widgets {
+namespace everload_tags {
 
-/// Tag line editor widget
+struct TagsConfig {
+    bool unique = true;
+};
+
+/// Tag editor widget
 /// `Space` commits a tag and initiates a new tag edition
-class TagsLineEdit : public QWidget {
+class Tags : public QWidget {
     Q_OBJECT
 
 public:
-    /// \param unique Ensure tags uniqueness
-    explicit TagsLineEdit(bool unique = true, QWidget* parent = nullptr);
-    ~TagsLineEdit() override;
+    explicit Tags(QWidget* parent = nullptr, TagsConfig const& config = {});
+    ~Tags() override;
 
     // QWidget
     QSize sizeHint() const override;
@@ -73,4 +76,4 @@ private:
     std::unique_ptr<Impl> impl;
 };
 
-} // namespace yenxo_widgets
+} // namespace everload_tags
