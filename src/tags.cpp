@@ -355,7 +355,16 @@ struct Tags::Impl {
     }
 
     int pillsWidth() const {
-        return tags.back().rect.right() - tags.front().rect.left() + 1;
+        size_t f = 0;
+        size_t l = tags.size() - 1;
+
+        if (f == current_index) {
+            ++f;
+        } else if (l == current_index) {
+            --l;
+        }
+
+        return f <= l ? tags[l].rect.right() - tags[f].rect.left() + 1 : 0;
     }
 
     qreal cursorToX() {
@@ -387,7 +396,7 @@ struct Tags::Impl {
             hscroll = cursor_x - pill_thickness.left() - pills_h_spacing;
         }
 
-        hscroll = qBound(hscroll_min, hscroll, hscroll_max);
+        hscroll = std::clamp(hscroll, hscroll_min, hscroll_max);
     }
 
     void editPreviousTag() {
@@ -747,6 +756,14 @@ void Tags::mouseMoveEvent(QMouseEvent* event) {
         }
     }
     setCursor(Qt::IBeamCursor);
+}
+
+void Tags::wheelEvent(QWheelEvent* event) {
+    event->accept();
+    impl->calcRects();
+    impl->updateHScrollRange();
+    impl->hscroll = std::clamp(impl->hscroll - event->pixelDelta().x(), impl->hscroll_min, impl->hscroll_max);
+    update();
 }
 
 } // namespace everload_tags
