@@ -194,7 +194,7 @@ struct Tags::Impl {
         if (cursorVisible()) {
             calcCurrentRect(lt, r.height());
         } else if (!currentText().isEmpty()) {
-            calcRects(lt, r.height(), std::make_pair(middle, middle));
+            calcRects(lt, r.height(), std::make_pair(middle, middle + 1));
         }
 
         calcRects(lt, r.height(), std::make_pair(middle + 1, tags.end()));
@@ -510,7 +510,7 @@ void Tags::paintEvent(QPaintEvent*) {
             impl->text_layout.drawCursor(&p, txt_p - QPointF(impl->hscroll, 0), impl->cursor);
         }
     } else if (!impl->currentText().isEmpty()) {
-        impl->drawTags(p, std::make_pair(middle, middle));
+        impl->drawTags(p, std::make_pair(middle, middle + 1));
     }
 
     // tags
