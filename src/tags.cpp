@@ -695,7 +695,9 @@ void Tags::keyPressEvent(QKeyEvent* event) {
 }
 
 void Tags::completion(std::vector<QString> const& completions) {
-    impl->completer = std::make_unique<QCompleter>(QStringList(completions.begin(), completions.end()));
+    QStringList tmp;
+    std::copy(begin(completions), end(completions), std::back_inserter(tmp));
+    impl->completer = std::make_unique<QCompleter>(std::move(tmp));
     impl->setupCompleter();
 }
 
