@@ -7,7 +7,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(everload_tags)
 
-
 # if inside subdirectory
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(${PROJECT_NAME}_sub OFF)
@@ -15,17 +14,23 @@ else()
     set(${PROJECT_NAME}_sub ON)
 endif()
 
-
 # 3rd party
 
 if(NOT ${PROJECT_NAME}_sub)
-    find_package(Qt5Widgets 5.9.5 QUIET REQUIRED)
+    find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets QUIET)
+    message(STATUS "Using Qt${QT_VERSION_MAJOR}")
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED QUIET COMPONENTS Widgets)
 endif()
 
-if(NOT TARGET Qt5::Widgets)
-    message(FATAL_ERROR "Qt5::Widgets is required dependency")
+if(NOT QT_VERSION_MAJOR)
+    message(FATAL_ERROR "QT_VERSION_MAJOR should be either 5 or 6")
 endif()
-if(Qt5Widgets_VERSION VERSION_LESS 5.9.5)
+
+if(NOT TARGET Qt${QT_VERSION_MAJOR}::Widgets)
+    message(FATAL_ERROR "Qt${QT_VERSION_MAJOR}::Widgets is required dependency")
+endif()
+
+if(Qt${QT_VERSION_MAJOR}Widgets_VERSION VERSION_LESS 5.9.5)
     message(FATAL_ERROR "Minimum supported Qt5 version is 5.9.5")
 endif()
 
@@ -51,13 +56,12 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets)
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt${QT_VERSION_MAJOR}::Widgets)
 
 # compile options/definitions
 if(NOT ${PROJECT_NAME}_sub)
   target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_development)
 endif()
-
 
 # Setup package config
 
