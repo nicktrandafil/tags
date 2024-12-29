@@ -578,7 +578,7 @@ QSize Tags::sizeHint() const {
     return (style()->sizeFromContents(
         QStyle::CT_LineEdit,
         &opt,
-        rect.size().expandedTo(QApplication::globalStrut()),
+        rect.size(),
         this));
 }
 
@@ -596,7 +596,7 @@ QSize Tags::minimumSizeHint() const {
     return (style()->sizeFromContents(
         QStyle::CT_LineEdit,
         &opt,
-        rect.size().expandedTo(QApplication::globalStrut()),
+        rect.size(),
         this));
 }
 
