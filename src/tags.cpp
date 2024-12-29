@@ -414,7 +414,7 @@ struct Tags::Impl {
     }
 
     void editTag(size_t i) {
-        assert(i >= 0 && i < tags.size());
+        assert(i < tags.size());
         currentIndex(i);
         moveCursor(currentText().size(), false);
     }
