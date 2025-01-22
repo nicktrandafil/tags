@@ -22,7 +22,7 @@
   SOFTWARE.
 */
 
-#include "everload_tags/tags.hpp"
+#include "everload_tags/tags_line_edit.hpp"
 
 #include <QApplication>
 #include <QCompleter>
