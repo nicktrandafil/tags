@@ -6,6 +6,10 @@ project(everload_tags VERSION 0.1)
 
 include(common.cmake)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
 # if inside subdirectory
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(${PROJECT_NAME}_sub OFF)
@@ -37,6 +41,7 @@ endif()
 
 add_library(${PROJECT_NAME}
     include/${PROJECT_NAME}/tags_line_edit.hpp
+    include/${PROJECT_NAME}/tags_edit.hpp
     src/tags_edit.cpp
     src/tags_line_edit.cpp
 )
@@ -50,8 +55,8 @@ set_target_build_settings(${PROJECT_NAME})
 
 option(everload_tags_BUILD_TESTING_APP "Build testing app" OFF)
 if(everload_tags_BUILD_TESTING_APP)
-    add_executable(app main.cpp)
-    set_target_build_settings(${PROJECT_NAME})
+    add_executable(app test/main.cpp test/form.h test/form.cpp test/form.ui)
+    set_target_build_settings(app)
     target_link_libraries(app PRIVATE ${PROJECT_NAME})
 endif()
 
