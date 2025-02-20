@@ -31,8 +31,8 @@
 
 namespace everload_tags {
 
-/// Tag multi-line editor widget
-/// `Space` commits a tag and initiates a new tag edition
+/// Tag multi-line tags editor widget, similar to `QTextEdit`.
+/// `Space` commits a tag and initiates a new tag edition.
 class TagsEdit : public QAbstractScrollArea {
     Q_OBJECT
 

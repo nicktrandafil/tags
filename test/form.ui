@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="everload_tags::Tags" name="widget" native="true"/>
+    <widget class="everload_tags::TagsLineEdit" name="widget" native="true"/>
    </item>
    <item>
     <widget class="everload_tags::TagsEdit" name="widget_2" native="true"/>
@@ -24,7 +24,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>everload_tags::Tags</class>
+   <class>everload_tags::TagsLineEdit</class>
    <extends>QWidget</extends>
    <header location="global">everload_tags/tags_line_edit.hpp</header>
    <container>1</container>
