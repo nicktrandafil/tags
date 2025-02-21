@@ -28,6 +28,7 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QKeyEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QScrollBar>
@@ -35,7 +36,6 @@
 #include <QStyleHints>
 #include <QStyleOptionFrame>
 #include <QTextLayout>
-#include <QKeyEvent>
 
 #include <cassert>
 
@@ -51,18 +51,17 @@ constexpr int tag_v_spacing = 2;
 // Default-state is one empty tag which is currently editing.
 struct TagsEdit::Impl : Style, Behavior, State {
     explicit Impl(TagsEdit* ifce, bool unique_)
-            : Behavior{
-                  .unique = unique_
-              }
-            , ifce{ifce} {
+        : Behavior{
+              .unique = unique_},
+          ifce{ifce} {
     }
 
     bool inCrossArea(size_t tag_index, QPoint point) const {
         return crossRect(tags[tag_index].rect)
-        .adjusted(-1, -1, 1, 1)
-        .translated(-offset())
-        .contains(point) &&
-        (!cursorVisible() || tag_index != editing_index);
+                   .adjusted(-1, -1, 1, 1)
+                   .translated(-offset())
+                   .contains(point) &&
+               (!cursorVisible() || tag_index != editing_index);
     }
 
     void drawTags(QPainter& p) const {
@@ -70,7 +69,7 @@ struct TagsEdit::Impl : Style, Behavior, State {
             auto const& tag = tags[i];
             if (i == editing_index && cursorVisible()) {
                 auto const txt_p =
-                currentRect().topLeft() + QPoint(pill_thickness.left(), pill_thickness.top());
+                    currentRect().topLeft() + QPoint(pill_thickness.left(), pill_thickness.top());
                 auto const f = formatting();
                 text_layout.draw(&p, txt_p - offset(), f);
                 if (blink_status) {
@@ -79,8 +78,8 @@ struct TagsEdit::Impl : Style, Behavior, State {
             } else if (i != editing_index || !tag.text.isEmpty()) {
                 QRect const& i_r = tag.rect.translated(-offset());
                 auto const text_pos =
-                i_r.topLeft() + QPointF(pill_thickness.left(),
-                                        ifce->fontMetrics().ascent() + ((i_r.height() - ifce->fontMetrics().height()) / 2));
+                    i_r.topLeft() + QPointF(pill_thickness.left(),
+                                            ifce->fontMetrics().ascent() + ((i_r.height() - ifce->fontMetrics().height()) / 2));
 
                 // draw tag rect
                 QColor const blue(0, 96, 100, 150);
@@ -157,7 +156,7 @@ struct TagsEdit::Impl : Style, Behavior, State {
     bool isCurrentTagADuplicate() const {
         assert(editing_index < tags.size());
         auto const mid =
-        tags.begin() + static_cast<std::ptrdiff_t>(editing_index);
+            tags.begin() + static_cast<std::ptrdiff_t>(editing_index);
         auto const text_eq = [this](auto const& x) {
             return x.text == currentText();
         };
@@ -235,8 +234,8 @@ struct TagsEdit::Impl : Style, Behavior, State {
         completer->setWidget(ifce);
         QObject::connect(
             completer.get(),
-                         qOverload<QString const&>(&QCompleter::activated),
-                         [this](QString const& text) { currentText(text); });
+            qOverload<QString const&>(&QCompleter::activated),
+            [this](QString const& text) { currentText(text); });
     }
 
     QVector<QTextLayout::FormatRange> formatting() const {
@@ -287,8 +286,8 @@ struct TagsEdit::Impl : Style, Behavior, State {
         if (mark) {
             auto e = select_start + select_size;
             int anchor = select_size > 0 && cursor == select_start ? e
-            : select_size > 0 && cursor == e          ? select_start
-            : cursor;
+                         : select_size > 0 && cursor == e          ? select_start
+                                                                   : cursor;
             select_start = qMin(anchor, pos);
             select_size = qMax(anchor, pos) - select_start;
         } else {
@@ -304,11 +303,11 @@ struct TagsEdit::Impl : Style, Behavior, State {
         for (auto const& tag : tags) {
             if (!tag.isEmpty() // Ensure Invariant-1
                 && (!unique    // Ensure Invariant-2
-                || std::find_if(t.begin(), t.end(), [tag](auto const& x) {
-                    return x.text == tag;
-                }) == t.end())) {
+                    || std::find_if(t.begin(), t.end(), [tag](auto const& x) {
+                           return x.text == tag;
+                       }) == t.end())) {
                 t.push_back(Tag{tag, QRect()});
-                }
+            }
         }
         if (t.empty()) { // Ensure Invariant-1
             t.push_back(Tag{});
@@ -346,7 +345,7 @@ struct TagsEdit::Impl : Style, Behavior, State {
 
                 // line wrapping
                 if (r.right() < i_r.right() && // doesn't fit in current line
-                    i_r.left() != r.left() // doesn't occupy entire line already
+                    i_r.left() != r.left()     // doesn't occupy entire line already
                 ) {
                     i_r.moveTo(r.left(), i_r.bottom() + tag_v_spacing);
                     lt = i_r.topLeft();
@@ -385,12 +384,12 @@ struct TagsEdit::Impl : Style, Behavior, State {
         updateVScrollRange();
         assert(!tags.empty()); // Invariant-1
         auto const max_width =
-                std::max_element(begin(tags),
-                                 end(tags),
-                                 [](auto const& x, auto const& y) {
-                                     return x.rect.width() < y.rect.width();
-                                 })
-                        ->rect.width();
+            std::max_element(begin(tags),
+                             end(tags),
+                             [](auto const& x, auto const& y) {
+                                 return x.rect.width() < y.rect.width();
+                             })
+                ->rect.width();
         updateHScrollRange(max_width);
     }
 
@@ -411,12 +410,12 @@ struct TagsEdit::Impl : Style, Behavior, State {
     void updateHScrollRange() {
         assert(!tags.empty()); // Invariant-1
         auto const max_width =
-                std::max_element(begin(tags),
-                                 end(tags),
-                                 [](auto const& x, auto const& y) {
-                                     return x.rect.width() < y.rect.width();
-                                 })
-                        ->rect.width();
+            std::max_element(begin(tags),
+                             end(tags),
+                             [](auto const& x, auto const& y) {
+                                 return x.rect.width() < y.rect.width();
+                             })
+                ->rect.width();
         updateHScrollRange(max_width);
     }
 
@@ -438,7 +437,7 @@ struct TagsEdit::Impl : Style, Behavior, State {
         auto const row_h = pillHeight(fm.height());
         auto const vscroll = ifce->verticalScrollBar()->value();
         auto const cursor_top =
-                currentRect().topLeft() + QPoint(qRound(cursorToX()), 0);
+            currentRect().topLeft() + QPoint(qRound(cursorToX()), 0);
         auto const cursor_bottom = cursor_top + QPoint(0, row_h - 1);
         auto const contents_rect = contentsRect().translated(0, vscroll);
         if (contents_rect.bottom() < cursor_bottom.y()) {
@@ -453,16 +452,14 @@ struct TagsEdit::Impl : Style, Behavior, State {
             return;
         }
         auto const contents_rect = contentsRect().translated(
-                ifce->horizontalScrollBar()->value(), 0);
+            ifce->horizontalScrollBar()->value(), 0);
         auto const cursor_x =
-                // cursor pos
-                (currentRect() - pill_thickness).left()
-                + qRound(cursorToX())
-                // pill right side
-                + tag_cross_spacing + tag_cross_size + pill_thickness.right();
+            // cursor pos
+            (currentRect() - pill_thickness).left() + qRound(cursorToX())
+            // pill right side
+            + tag_cross_spacing + tag_cross_size + pill_thickness.right();
         if (contents_rect.right() < cursor_x) {
-            ifce->horizontalScrollBar()->setValue(cursor_x
-                                                  - contents_rect.width());
+            ifce->horizontalScrollBar()->setValue(cursor_x - contents_rect.width());
         } else if (cursor_x < contents_rect.left()) {
             ifce->horizontalScrollBar()->setValue(cursor_x - 1);
         }
@@ -472,8 +469,7 @@ struct TagsEdit::Impl : Style, Behavior, State {
 };
 
 TagsEdit::TagsEdit(bool unique, QWidget* parent)
-        : QAbstractScrollArea(parent)
-        , impl(std::make_unique<Impl>(this, unique)) {
+    : QAbstractScrollArea(parent), impl(std::make_unique<Impl>(this, unique)) {
     QSizePolicy size_policy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     size_policy.setHeightForWidth(true);
     setSizePolicy(size_policy);
@@ -542,18 +538,17 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
         }
 
         if (!impl->tags[i]
-                     .rect.translated(-impl->offset())
-                     .contains(event->pos())) {
+                 .rect.translated(-impl->offset())
+                 .contains(event->pos())) {
             continue;
         }
 
         if (impl->editing_index == i) {
             impl->moveCursor(impl->text_layout.lineAt(0).xToCursor(
-                                     (event->pos()
-                                      - impl->currentRect()
-                                                .translated(-impl->offset())
-                                                .topLeft())
-                                             .x()),
+                                 (event->pos() - impl->currentRect()
+                                                     .translated(-impl->offset())
+                                                     .topLeft())
+                                     .x()),
                              false);
         } else {
             impl->editTag(i);
@@ -566,8 +561,7 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
     if (!found) {
         for (auto it = begin(impl->tags); it != end(impl->tags); ++it) {
             // Click of a row.
-            if (it->rect.translated(-impl->offset()).bottom()
-                < event->pos().y()) {
+            if (it->rect.translated(-impl->offset()).bottom() < event->pos().y()) {
                 continue;
             }
 
@@ -578,7 +572,7 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
             }
 
             impl->editNewTag(
-                    static_cast<size_t>(std::distance(begin(impl->tags), it)));
+                static_cast<size_t>(std::distance(begin(impl->tags), it)));
             break;
         }
 
@@ -606,20 +600,17 @@ QSize TagsEdit::minimumSizeHint() const {
                0,
                impl->pillWidth(fm.maxWidth()),
                impl->pillHeight(fm.height()));
-    rect += contentsMargins() + viewport()->contentsMargins()
-          + viewportMargins();
+    rect += contentsMargins() + viewport()->contentsMargins() + viewportMargins();
     return rect.size();
 }
 
 int TagsEdit::heightForWidth(int w) const {
     auto const content_width = w;
     QRect contents_rect(0, 0, content_width, 100);
-    contents_rect -= contentsMargins() + viewport()->contentsMargins()
-                   + viewportMargins();
+    contents_rect -= contentsMargins() + viewport()->contentsMargins() + viewportMargins();
     auto tags = impl->tags;
     contents_rect = impl->calcRects(tags, contents_rect);
-    contents_rect += contentsMargins() + viewport()->contentsMargins()
-                   + viewportMargins();
+    contents_rect += contentsMargins() + viewport()->contentsMargins() + viewportMargins();
     return contents_rect.height();
 }
 
@@ -645,8 +636,8 @@ void TagsEdit::keyPressEvent(QKeyEvent* event) {
                 impl->editPreviousTag();
             } else {
                 impl->moveCursor(
-                        impl->text_layout.previousCursorPosition(impl->cursor),
-                        false);
+                    impl->text_layout.previousCursorPosition(impl->cursor),
+                    false);
             }
             event->accept();
             break;
@@ -655,8 +646,8 @@ void TagsEdit::keyPressEvent(QKeyEvent* event) {
                 impl->editNextTag();
             } else {
                 impl->moveCursor(
-                        impl->text_layout.nextCursorPosition(impl->cursor),
-                        false);
+                    impl->text_layout.nextCursorPosition(impl->cursor),
+                    false);
             }
             event->accept();
             break;
@@ -754,10 +745,8 @@ std::vector<QString> TagsEdit::tags() const {
                    ret.begin(),
                    [](Tag const& tag) { return tag.text; });
     assert(!ret.empty()); // Invariant-1
-    if (ret[impl->editing_index].isEmpty()
-        || (impl->unique && impl->isCurrentTagADuplicate())) {
-        ret.erase(ret.begin()
-                  + static_cast<std::ptrdiff_t>(impl->editing_index));
+    if (ret[impl->editing_index].isEmpty() || (impl->unique && impl->isCurrentTagADuplicate())) {
+        ret.erase(ret.begin() + static_cast<std::ptrdiff_t>(impl->editing_index));
     }
     return ret;
 }

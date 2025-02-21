@@ -24,15 +24,15 @@
 
 #pragma once
 
+#include <QCompleter>
+#include <QFontMetrics>
 #include <QKeyEvent>
+#include <QPainter>
+#include <QPainterPath>
 #include <QRect>
 #include <QString>
-#include <QTextLayout>
-#include <QCompleter>
 #include <QStyleOptionFrame>
-#include <QPainter>
-#include <QFontMetrics>
-#include <QPainterPath>
+#include <QTextLayout>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
 #define FONT_METRICS_WIDTH(fmt, ...) fmt.width(__VA_ARGS__)
@@ -72,7 +72,7 @@ struct Style {
         for (auto it = range.first; it != range.second; ++it) {
             QRect const& i_r = it->rect.translated(translate);
             auto const text_pos = i_r.topLeft() +
-            QPointF(pill_thickness.left(), fm.ascent() + ((i_r.height() - fm.height()) / 2));
+                                  QPointF(pill_thickness.left(), fm.ascent() + ((i_r.height() - fm.height()) / 2));
 
             // drag tag rect
             QColor const blue(0, 96, 100, 150);
