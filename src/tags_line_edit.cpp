@@ -58,35 +58,7 @@ struct TagsLineEdit::Impl : Style, Behavior, State {
 
     template <class It>
     void drawTags(QPainter& p, std::pair<It, It> range) const {
-        for (auto it = range.first; it != range.second; ++it) {
-            QRect const& i_r = it->rect.translated(-hscroll, 0);
-            auto const text_pos = i_r.topLeft() +
-                                  QPointF(pill_thickness.left(),
-                                          ifce->fontMetrics().ascent() +
-                                              ((i_r.height() - ifce->fontMetrics().height()) / 2));
-
-            // drag tag rect
-            QColor const blue(0, 96, 100, 150);
-            QPainterPath path;
-            path.addRoundedRect(i_r, 4, 4);
-            p.fillPath(path, blue);
-
-            // draw text
-            p.drawText(text_pos, it->text);
-
-            // calc cross rect
-            auto const i_cross_r = crossRect(i_r);
-
-            QPen pen = p.pen();
-            pen.setWidth(2);
-
-            p.save();
-            p.setPen(pen);
-            p.setRenderHint(QPainter::Antialiasing);
-            p.drawLine(QLineF(i_cross_r.topLeft(), i_cross_r.bottomRight()));
-            p.drawLine(QLineF(i_cross_r.bottomLeft(), i_cross_r.topRight()));
-            p.restore();
-        }
+        Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, {-hscroll, 0});
     }
 
     QRect contentsRect() const {

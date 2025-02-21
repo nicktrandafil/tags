@@ -30,6 +30,9 @@
 #include <QTextLayout>
 #include <QCompleter>
 #include <QStyleOptionFrame>
+#include <QPainter>
+#include <QFontMetrics>
+#include <QPainterPath>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
 #define FONT_METRICS_WIDTH(fmt, ...) fmt.width(__VA_ARGS__)
@@ -54,10 +57,45 @@ struct Style {
     /// Distance between text and cross
     int tag_cross_spacing = 2;
 
-    QRectF crossRect(QRectF const& r) const {
-        QRectF cross(QPointF{0, 0}, QSizeF{tag_cross_size, tag_cross_size});
-        cross.moveCenter(QPointF(r.right() - tag_cross_size, r.center().y()));
+    static QRectF crossRect(QRectF const& r, qreal cross_size) {
+        QRectF cross(QPointF{0, 0}, QSizeF{cross_size, cross_size});
+        cross.moveCenter(QPointF(r.right() - cross_size, r.center().y()));
         return cross;
+    }
+
+    QRectF crossRect(QRectF const& r) const {
+        return crossRect(r, tag_cross_size);
+    }
+
+    template <class It>
+    static void drawTags(QPainter& p, std::pair<It, It> range, QFontMetrics const& fm, QMargins const& pill_thickness, qreal cross_size, QPoint const& translate) {
+        for (auto it = range.first; it != range.second; ++it) {
+            QRect const& i_r = it->rect.translated(translate);
+            auto const text_pos = i_r.topLeft() +
+            QPointF(pill_thickness.left(), fm.ascent() + ((i_r.height() - fm.height()) / 2));
+
+            // drag tag rect
+            QColor const blue(0, 96, 100, 150);
+            QPainterPath path;
+            path.addRoundedRect(i_r, 4, 4);
+            p.fillPath(path, blue);
+
+            // draw text
+            p.drawText(text_pos, it->text);
+
+            // calc cross rect
+            auto const i_cross_r = Style::crossRect(i_r, cross_size);
+
+            QPen pen = p.pen();
+            pen.setWidth(2);
+
+            p.save();
+            p.setPen(pen);
+            p.setRenderHint(QPainter::Antialiasing);
+            p.drawLine(QLineF(i_cross_r.topLeft(), i_cross_r.bottomRight()));
+            p.drawLine(QLineF(i_cross_r.bottomLeft(), i_cross_r.topRight()));
+            p.restore();
+        }
     }
 
     int pillWidth(int text_width) const {
