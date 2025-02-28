@@ -44,21 +44,26 @@
 
 namespace everload_tags {
 
-struct TagsLineEdit::Impl : Style, Behavior, State {
+struct TagsLineEdit::Impl : Common {
     explicit Impl(TagsLineEdit* const& ifce, bool unique)
-        : Behavior{
-              .unique = unique,
-          },
+        : Common{Style{},
+                 Behavior{
+                     .unique = unique,
+                 },
+                 {}},
           ifce{ifce} {}
 
+    QPoint offset() const {
+        return {hscroll, 0};
+    }
+
     bool inCrossArea(size_t tag_index, QPoint const& point) const {
-        return crossRect(tags[tag_index].rect).adjusted(-1, -1, 1, 1).translated(-hscroll, 0).contains(point) &&
+        return crossRect(tags[tag_index].rect).adjusted(-1, -1, 1, 1).translated(-offset()).contains(point) &&
                (!cursorVisible() || tag_index != editing_index);
     }
 
-    template <class It>
-    void drawTags(QPainter& p, std::pair<It, It> range) const {
-        Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, {-hscroll, 0});
+    template <class It> void drawTags(QPainter& p, std::pair<It, It> range) const {
+        Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, -offset());
     }
 
     QRect contentsRect() const {
@@ -84,8 +89,7 @@ struct TagsLineEdit::Impl : Style, Behavior, State {
         calcRects(lt, r.height(), std::make_pair(middle + 1, tags.end()));
     }
 
-    template <class It>
-    void calcRects(QPoint& lt, int height, std::pair<It, It> range) {
+    template <class It> void calcRects(QPoint& lt, int height, std::pair<It, It> range) {
         for (auto it = range.first; it != range.second; ++it) {
             const auto text_width = FONT_METRICS_WIDTH(ifce->fontMetrics(), it->text);
             it->rect = QRect(lt, QSize(pillWidth(text_width), height));
@@ -134,10 +138,9 @@ struct TagsLineEdit::Impl : Style, Behavior, State {
 
     void currentIndex(size_t i) {
         assert(i < tags.size());
-        if (currentText().isEmpty() || (unique && 1 < std::count_if(tags.begin(), tags.end(),
-                                                                    [this](auto const& x) {
-                                                                        return x.text == currentText();
-                                                                    }))) {
+        if (currentText().isEmpty() || (unique && 1 < std::count_if(tags.begin(), tags.end(), [this](auto const& x) {
+                                                      return x.text == currentText();
+                                                  }))) {
             tags.erase(tags.begin() + static_cast<ptrdiff_t>(editing_index));
             if (editing_index <= i) {
                 --i;
@@ -158,6 +161,7 @@ struct TagsLineEdit::Impl : Style, Behavior, State {
         return tags[editing_index].text;
     }
 
+    // todo: remove
     QRect const& currentRect() const {
         return tags[editing_index].rect;
     }
@@ -175,22 +179,7 @@ struct TagsLineEdit::Impl : Style, Behavior, State {
     void setupCompleter() {
         completer->setWidget(ifce);
         connect(completer.get(), static_cast<void (QCompleter::*)(QString const&)>(&QCompleter::activated), ifce,
-                [this](QString const& text) {
-                    currentText(text);
-                });
-    }
-
-    QVector<QTextLayout::FormatRange> formatting() const {
-        if (select_size == 0) {
-            return {};
-        }
-
-        QTextLayout::FormatRange selection;
-        selection.start = select_start;
-        selection.length = select_size;
-        selection.format.setBackground(ifce->palette().brush(QPalette::Highlight));
-        selection.format.setForeground(ifce->palette().brush(QPalette::HighlightedText));
-        return {selection};
+                [this](QString const& text) { currentText(text); });
     }
 
     bool hasSelection() const noexcept {
@@ -224,11 +213,9 @@ struct TagsLineEdit::Impl : Style, Behavior, State {
     void moveCursor(int pos, bool mark) {
         if (mark) {
             auto e = select_start + select_size;
-            int anchor = select_size > 0 && cursor == select_start
-                             ? e
-                         : select_size > 0 && cursor == e
-                             ? select_start
-                             : cursor;
+            int anchor = select_size > 0 && cursor == select_start ? e
+                         : select_size > 0 && cursor == e          ? select_start
+                                                                   : cursor;
             select_start = qMin(anchor, pos);
             select_size = qMax(anchor, pos) - select_start;
         } else {
@@ -274,8 +261,10 @@ struct TagsLineEdit::Impl : Style, Behavior, State {
         auto const contents_rect = contentsRect().translated(hscroll, 0);
         int const cursor_x = (currentRect() - pill_thickness).left() + qRound(cursorToX());
 
-        if (contents_rect.right() < cursor_x + tag_cross_spacing + tag_cross_size + pill_thickness.right() + pills_h_spacing) {
-            hscroll = cursor_x - contents_rect.width() + tag_cross_spacing + tag_cross_size + pill_thickness.right() + pills_h_spacing;
+        if (contents_rect.right() <
+            cursor_x + tag_cross_spacing + tag_cross_size + pill_thickness.right() + pills_h_spacing) {
+            hscroll = cursor_x - contents_rect.width() + tag_cross_spacing + tag_cross_size + pill_thickness.right() +
+                      pills_h_spacing;
         } else if (cursor_x - pill_thickness.left() - pills_h_spacing < contents_rect.left()) {
             hscroll = cursor_x - pill_thickness.left() - pills_h_spacing;
         }
@@ -318,8 +307,7 @@ struct TagsLineEdit::Impl : Style, Behavior, State {
 };
 
 TagsLineEdit::TagsLineEdit(QWidget* parent, TagsConfig const& config)
-    : QWidget(parent),
-      impl(std::make_unique<Impl>(this, config.unique)) {
+    : QWidget(parent), impl(std::make_unique<Impl>(this, config.unique)) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setFocusPolicy(Qt::StrongFocus);
     setCursor(Qt::IBeamCursor);
@@ -373,17 +361,9 @@ void TagsLineEdit::paintEvent(QPaintEvent*) {
     // tags
     impl->drawTags(p, std::make_pair(impl->tags.cbegin(), middle));
 
+    // todo: draw in one round all if the editor is inactive else, have this 3-part drawing.
     if (impl->cursorVisible()) {
-        // draw not terminated tag
-        auto const& r = impl->currentRect();
-        auto const& txt_p = r.topLeft() + QPointF(impl->pill_thickness.left(), (r.height() - fontMetrics().height()) / 2);
-        auto const formatting = impl->formatting();
-        impl->text_layout.draw(&p, txt_p - QPointF(impl->hscroll, 0), formatting);
-
-        // draw cursor
-        if (impl->blink_status) {
-            impl->text_layout.drawCursor(&p, txt_p - QPointF(impl->hscroll, 0), impl->cursor);
-        }
+        impl->drawEditor(p, palette(), impl->offset());
     } else if (!impl->currentText().isEmpty()) {
         impl->drawTags(p, std::make_pair(middle, middle + 1));
     }
@@ -450,11 +430,7 @@ QSize TagsLineEdit::sizeHint() const {
     QStyleOptionFrame opt;
     initStyleOption(&opt, this);
 
-    return (style()->sizeFromContents(
-        QStyle::CT_LineEdit,
-        &opt,
-        rect.size(),
-        this));
+    return (style()->sizeFromContents(QStyle::CT_LineEdit, &opt, rect.size(), this));
 }
 
 QSize TagsLineEdit::minimumSizeHint() const {
@@ -468,11 +444,7 @@ QSize TagsLineEdit::minimumSizeHint() const {
     QStyleOptionFrame opt;
     initStyleOption(&opt, this);
 
-    return (style()->sizeFromContents(
-        QStyle::CT_LineEdit,
-        &opt,
-        rect.size(),
-        this));
+    return (style()->sizeFromContents(QStyle::CT_LineEdit, &opt, rect.size(), this));
 }
 
 void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
@@ -578,24 +550,15 @@ void TagsLineEdit::completion(std::vector<QString> const& completions) {
 
 void TagsLineEdit::tags(std::vector<QString> const& tags) {
     std::vector<Tag> t(tags.size());
-    std::transform(tags.begin(), tags.end(), t.begin(),
-                   [](QString const& text) {
-                       return Tag{text, QRect()};
-                   });
+    std::transform(tags.begin(), tags.end(), t.begin(), [](QString const& text) { return Tag{text, QRect()}; });
 
     // Ensure Invariant-1
-    t.erase(std::remove_if(t.begin(), t.end(),
-                           [](auto const& x) {
-                               return x.text.isEmpty();
-                           }),
-            t.end());
+    t.erase(std::remove_if(t.begin(), t.end(), [](auto const& x) { return x.text.isEmpty(); }), t.end());
 
     // Ensure `TagsConfig::unique`
     if (impl->unique) {
         t.erase(std::remove_if(t.begin(), t.end(),
-                               [&tags](auto const& x) {
-                                   return 1 < std::count(tags.begin(), tags.end(), x.text);
-                               }),
+                               [&tags](auto const& x) { return 1 < std::count(tags.begin(), tags.end(), x.text); }),
                 t.end());
     }
 
@@ -614,11 +577,9 @@ void TagsLineEdit::tags(std::vector<QString> const& tags) {
 
 std::vector<QString> TagsLineEdit::tags() const {
     std::vector<QString> ret(impl->tags.size());
-    std::transform(impl->tags.begin(), impl->tags.end(), ret.begin(),
-                   [](auto const& tag) {
-                       return tag.text;
-                   });
-    if (impl->currentText().isEmpty() || (impl->unique && 1 < std::count(ret.begin(), ret.end(), impl->currentText()))) {
+    std::transform(impl->tags.begin(), impl->tags.end(), ret.begin(), [](auto const& tag) { return tag.text; });
+    if (impl->currentText().isEmpty() ||
+        (impl->unique && 1 < std::count(ret.begin(), ret.end(), impl->currentText()))) {
         ret.erase(ret.begin() + static_cast<ptrdiff_t>(impl->editing_index));
     }
     return ret;

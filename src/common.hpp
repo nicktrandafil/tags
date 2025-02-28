@@ -68,11 +68,12 @@ struct Style {
     }
 
     template <class It>
-    static void drawTags(QPainter& p, std::pair<It, It> range, QFontMetrics const& fm, QMargins const& pill_thickness, qreal cross_size, QPoint const& translate) {
+    static void drawTags(QPainter& p, std::pair<It, It> range, QFontMetrics const& fm, QMargins const& pill_thickness,
+                         qreal cross_size, QPoint const& offset) {
         for (auto it = range.first; it != range.second; ++it) {
-            QRect const& i_r = it->rect.translated(translate);
-            auto const text_pos = i_r.topLeft() +
-                                  QPointF(pill_thickness.left(), fm.ascent() + ((i_r.height() - fm.height()) / 2));
+            QRect const& i_r = it->rect.translated(offset);
+            auto const text_pos =
+                i_r.topLeft() + QPointF(pill_thickness.left(), fm.ascent() + ((i_r.height() - fm.height()) / 2));
 
             // drag tag rect
             QColor const blue(0, 96, 100, 150);
@@ -122,6 +123,38 @@ struct State {
     int select_size{0};
     QTextLayout text_layout;
     std::unique_ptr<QCompleter> completer{new QCompleter{}};
+
+    QRect const& editingRect() const {
+        return tags[editing_index].rect;
+    }
+
+    QVector<QTextLayout::FormatRange> formatting(QPalette const& palette) const {
+        if (select_size == 0) {
+            return {};
+        }
+
+        QTextLayout::FormatRange selection;
+        selection.start = select_start;
+        selection.length = select_size;
+        selection.format.setBackground(palette.brush(QPalette::Highlight));
+        selection.format.setForeground(palette.brush(QPalette::HighlightedText));
+        return {selection};
+    }
+};
+
+struct Common : Style, Behavior, State {
+    void drawEditor(QPainter& p, QPalette const& palette, QPoint const& offset) const {
+        // draw the editing tag
+        auto const& r = editingRect();
+        auto const& txt_p = r.topLeft() + QPointF(pill_thickness.left(), pill_thickness.top());
+        auto const f = formatting(palette);
+        text_layout.draw(&p, txt_p - offset, f);
+
+        // draw cursor
+        if (blink_status) {
+            text_layout.drawCursor(&p, txt_p - offset, cursor);
+        }
+    }
 };
 
 // Without this margin the frame is not highlighted if the item is focused
