@@ -44,6 +44,7 @@ add_library(${PROJECT_NAME}
     include/${PROJECT_NAME}/tags_edit.hpp
     src/tags_edit.cpp
     src/tags_line_edit.cpp
+    src/scope_exit.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)

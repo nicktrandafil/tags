@@ -36,6 +36,8 @@
 #include <QStyleOptionFrame>
 #include <QTextLayout>
 
+#include <chrono>
+
 #if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
 #define FONT_METRICS_WIDTH(fmt, ...) fmt.width(__VA_ARGS__)
 #else
@@ -127,6 +129,7 @@ struct State {
     int select_size{0};
     QTextLayout text_layout;
     std::unique_ptr<QCompleter> completer{new QCompleter{}};
+    std::chrono::steady_clock::time_point focused_at{};
 
     QRect const& editorRect() const {
         return tags[editing_index].rect;
@@ -164,10 +167,10 @@ struct State {
         if (blink_timer) {
             ifce->killTimer(blink_timer);
             blink_timer = 0;
-            blink_status = true;
         }
 
         if (visible) {
+            blink_status = true;
             int flashTime = QGuiApplication::styleHints()->cursorFlashTime();
             if (flashTime >= 2) {
                 blink_timer = ifce->startTimer(flashTime / 2);
@@ -198,8 +201,8 @@ struct State {
         if (mark) {
             auto e = select_start + select_size;
             int anchor = select_size > 0 && cursor == select_start ? e
-            : select_size > 0 && cursor == e          ? select_start
-            : cursor;
+                         : select_size > 0 && cursor == e          ? select_start
+                                                                   : cursor;
             select_start = qMin(anchor, pos);
             select_size = qMax(anchor, pos) - select_start;
         } else {
@@ -259,7 +262,7 @@ struct Common : Style, Behavior, State {
         auto const mid = tags.begin() + static_cast<std::ptrdiff_t>(editing_index);
         auto const text_eq = [this](auto const& x) { return x.text == editorText(); };
         return std::find_if(tags.begin(), mid, text_eq) != mid ||
-        std::find_if(mid + 1, tags.end(), text_eq) != tags.end();
+               std::find_if(mid + 1, tags.end(), text_eq) != tags.end();
     }
 
     /// Makes the tag at `i` currently editing, and ensures Invariant-1 and Invariant-2`.
@@ -355,6 +358,10 @@ inline void initStyleOption(QStyleOptionFrame* option, QWidget const* widget) {
     option->midLineWidth = 0;
     option->state |= QStyle::State_Sunken;
     option->features = QStyleOptionFrame::None;
+}
+
+inline auto elapsed(std::chrono::steady_clock::time_point const& ts) {
+    return std::chrono::steady_clock::now() - ts;
 }
 
 } // namespace everload_tags

@@ -185,6 +185,7 @@ void TagsLineEdit::resizeEvent(QResizeEvent*) {
 }
 
 void TagsLineEdit::focusInEvent(QFocusEvent*) {
+    impl->focused_at = std::chrono::steady_clock::now();
     impl->setCursorVisible(true, this);
     impl->updateDisplayText();
     impl->calcRects();
@@ -264,7 +265,7 @@ void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
     }
 
     if (!found) {
-        impl->editNewTag(impl->tags.size() - 1);
+        impl->editNewTag(impl->tags.size());
         event->accept();
     }
 

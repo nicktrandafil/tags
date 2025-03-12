@@ -25,6 +25,7 @@
 #include "everload_tags/tags_edit.hpp"
 
 #include "common.hpp"
+#include "scope_exit.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -65,10 +66,12 @@ struct TagsEdit::Impl : Common {
     }
 
     void setEditorText(QString const& text) {
+        // todo: see if updaet1 applicable
         editorText() = text;
         moveCursor(editorText().length(), false);
         updateDisplayText();
-        onCurrentTextUpdate();
+        calcRectsUpdateScrollRanges();
+        ifce->viewport()->update();
     }
 
     void setupCompleter() {
@@ -125,11 +128,6 @@ struct TagsEdit::Impl : Common {
         }
     }
 
-    void onCurrentTextUpdate() {
-        calcRectsUpdateScrollRanges();
-        ifce->viewport()->update();
-    }
-
     QRect contentsRect() const {
         return ifce->viewport()->contentsRect();
     }
@@ -149,11 +147,7 @@ struct TagsEdit::Impl : Common {
     void calcRectsUpdateScrollRanges() {
         calcRects(tags);
         updateVScrollRange();
-        assert(!tags.empty()); // Invariant-1
-        auto const max_width = std::max_element(begin(tags), end(tags), [](auto const& x, auto const& y) {
-                                   return x.rect.width() < y.rect.width();
-                               })->rect.width();
-        updateHScrollRange(max_width);
+        updateHScrollRange();
     }
 
     void updateVScrollRange() {
@@ -172,14 +166,12 @@ struct TagsEdit::Impl : Common {
 
     void updateHScrollRange() {
         assert(!tags.empty()); // Invariant-1
-        auto const max_width = std::max_element(begin(tags), end(tags), [](auto const& x, auto const& y) {
-                                   return x.rect.width() < y.rect.width();
-                               })->rect.width();
-        updateHScrollRange(max_width);
-    }
+        auto const width = std::max_element(begin(tags), end(tags), [](auto const& x, auto const& y) {
+                               return x.rect.width() < y.rect.width();
+                           })->rect.width();
 
-    void updateHScrollRange(int width) {
         auto const contents_rect_width = contentsRect().width();
+
         if (contents_rect_width < width) {
             ifce->horizontalScrollBar()->setRange(0, width - contents_rect_width);
         } else {
@@ -222,6 +214,15 @@ struct TagsEdit::Impl : Common {
         }
     }
 
+    void update1() {
+        updateDisplayText();
+        calcRectsUpdateScrollRanges();
+        ensureCursorIsVisibleV();
+        ensureCursorIsVisibleH();
+        updateCursorBlinking(ifce);
+        ifce->viewport()->update();
+    }
+
     TagsEdit* const ifce;
 };
 
@@ -254,6 +255,7 @@ void TagsEdit::resizeEvent(QResizeEvent* event) {
 }
 
 void TagsEdit::focusInEvent(QFocusEvent* event) {
+    impl->focused_at = std::chrono::steady_clock::now();
     impl->setCursorVisible(true, this);
     impl->updateDisplayText();
     impl->calcRects(impl->tags);
@@ -301,19 +303,25 @@ void TagsEdit::timerEvent(QTimerEvent* event) {
 }
 
 void TagsEdit::mousePressEvent(QMouseEvent* event) {
-    bool found = false;
-    for (size_t i = 0; i < impl->tags.size(); ++i) {
-        if (impl->inCrossArea(i, event->pos(), impl->offset())) {
-            impl->removeTag(i);
-            found = true;
-            break;
-        }
+    // we don't want to change cursor position if this event is part of focusIn
+    using namespace std::chrono_literals;
+    if (elapsed(impl->focused_at) < 1ms) {
+        return;
+    }
 
+    EVERLOAD_TAGS_SCOPE_EXIT {
+        impl->update1();
+    };
+
+    // remove or edit a tag
+    for (size_t i = 0; i < impl->tags.size(); ++i) {
         if (!impl->tags[i].rect.translated(-impl->offset()).contains(event->pos())) {
             continue;
         }
 
-        if (impl->editing_index == i) {
+        if (impl->inCrossArea(i, event->pos(), impl->offset())) {
+            impl->removeTag(i);
+        } else if (impl->editing_index == i) {
             impl->moveCursor(impl->text_layout.lineAt(0).xToCursor(
                                  (event->pos() - impl->editorRect().translated(-impl->offset()).topLeft()).x()),
                              false);
@@ -321,37 +329,24 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
             impl->editTag(i);
         }
 
-        found = true;
-        break;
+        return;
     }
 
-    if (!found) {
-        for (auto it = begin(impl->tags); it != end(impl->tags); ++it) {
-            // Click of a row.
-            if (it->rect.translated(-impl->offset()).bottom() < event->pos().y()) {
-                continue;
-            }
-
-            // Last tag of the row.
-            auto const row = it->rect.top();
-            while (it != end(impl->tags) && it->rect.top() == row) {
-                ++it;
-            }
-
-            impl->editNewTag(static_cast<size_t>(std::distance(begin(impl->tags), it)));
-            break;
+    // add new tag closed to the cursor
+    for (auto it = begin(impl->tags); it != end(impl->tags); ++it) {
+        // find the row
+        if (it->rect.translated(-impl->offset()).bottom() < event->pos().y()) {
+            continue;
         }
 
-        event->accept();
-    }
+        // find the closest spot
+        auto const row = it->rect.top();
+        while (it != end(impl->tags) && it->rect.top() == row && event->pos().x() > it->rect.left()) {
+            ++it;
+        }
 
-    if (event->isAccepted()) {
-        impl->updateDisplayText();
-        impl->calcRectsUpdateScrollRanges();
-        impl->ensureCursorIsVisibleV();
-        impl->ensureCursorIsVisibleH();
-        impl->updateCursorBlinking(this);
-        viewport()->update();
+        impl->editNewTag(static_cast<size_t>(std::distance(begin(impl->tags), it)));
+        break;
     }
 }
 
