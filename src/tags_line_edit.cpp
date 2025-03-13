@@ -25,6 +25,7 @@
 #include "everload_tags/tags_line_edit.hpp"
 
 #include "common.hpp"
+#include "scope_exit.h"
 
 #include <QApplication>
 #include <QCompleter>
@@ -158,6 +159,15 @@ struct TagsLineEdit::Impl : Common {
         hscroll = std::clamp(hscroll, hscroll_min, hscroll_max);
     }
 
+    void update1() {
+        updateDisplayText();
+        calcRects();
+        updateHScrollRange();
+        ensureCursorIsVisible();
+        updateCursorBlinking(ifce);
+        ifce->update();
+    }
+
     TagsLineEdit* const ifce;
 
     int const hscroll_min = 0;
@@ -240,19 +250,24 @@ void TagsLineEdit::timerEvent(QTimerEvent* event) {
 }
 
 void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
-    bool found = false;
-    for (size_t i = 0; i < impl->tags.size(); ++i) {
-        if (impl->inCrossArea(i, event->pos(), impl->offset())) {
-            impl->removeTag(i);
-            found = true;
-            break;
-        }
+    // we don't want to change cursor position if this event is part of focusIn
+    using namespace std::chrono_literals;
+    if (elapsed(impl->focused_at) < 1ms) {
+        return;
+    }
 
+    EVERLOAD_TAGS_SCOPE_EXIT {
+        impl->update1();
+    };
+
+    for (size_t i = 0; i < impl->tags.size(); ++i) {
         if (!impl->tags[i].rect.translated(-impl->offset()).contains(event->pos())) {
             continue;
         }
 
-        if (impl->editing_index == i) {
+        if (impl->inCrossArea(i, event->pos(), impl->offset())) {
+            impl->removeTag(i);
+        } else if (impl->editing_index == i) {
             impl->moveCursor(impl->text_layout.lineAt(0).xToCursor(
                                  (event->pos() - impl->editorRect().translated(-impl->hscroll, 0).topLeft()).x()),
                              false);
@@ -260,23 +275,10 @@ void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
             impl->editTag(i);
         }
 
-        found = true;
-        break;
+        return;
     }
 
-    if (!found) {
-        impl->editNewTag(impl->tags.size());
-        event->accept();
-    }
-
-    if (event->isAccepted()) {
-        impl->updateDisplayText();
-        impl->calcRects();
-        impl->updateHScrollRange();
-        impl->ensureCursorIsVisible();
-        impl->updateCursorBlinking(this);
-        update();
-    }
+    impl->editNewTag(impl->tags.size());
 }
 
 QSize TagsLineEdit::sizeHint() const {
