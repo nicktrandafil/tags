@@ -55,9 +55,9 @@ struct Style {
     /// Width of painting from text to the the pill border
     QMargins pill_thickness = {3, 3, 4, 3};
     /// Space between pills
-    int pills_h_spacing = 3;
+    int pills_h_spacing = 4;
     /// Size of cross side
-    qreal tag_cross_size = 4;
+    qreal tag_cross_size = 5;
     /// Distance between text and cross
     int tag_cross_spacing = 2;
 
@@ -226,7 +226,7 @@ struct State {
     }
 
     void removeSelection() {
-        assert(cursor + select_size <= editorText().size());
+        assert(select_start + select_size <= editorText().size());
         cursor = select_start;
         editorText().remove(cursor, select_size);
         deselectAll();

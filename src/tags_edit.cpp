@@ -201,12 +201,7 @@ struct TagsEdit::Impl : Common {
             return;
         }
         auto const contents_rect = contentsRect().translated(ifce->horizontalScrollBar()->value(), 0);
-        auto const cursor_x =
-            // cursor pos
-            (editorRect() - pill_thickness).left() +
-            qRound(cursorToX())
-            // pill right side
-            + tag_cross_spacing + tag_cross_size + pill_thickness.right();
+        auto const cursor_x = (editorRect() - pill_thickness).left() + qRound(cursorToX());
         if (contents_rect.right() < cursor_x) {
             ifce->horizontalScrollBar()->setValue(cursor_x - contents_rect.width());
         } else if (cursor_x < contents_rect.left()) {
@@ -259,6 +254,8 @@ void TagsEdit::focusInEvent(QFocusEvent* event) {
     impl->setCursorVisible(true, this);
     impl->updateDisplayText();
     impl->calcRects(impl->tags);
+    impl->ensureCursorIsVisibleH();
+    impl->ensureCursorIsVisibleV();
     viewport()->update();
     QAbstractScrollArea::focusInEvent(event);
 }
@@ -340,14 +337,18 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
         }
 
         // find the closest spot
-        auto const row = it->rect.top();
-        while (it != end(impl->tags) && it->rect.top() == row && event->pos().x() > it->rect.left()) {
+        auto const row = it->rect.translated(-impl->offset()).top();
+        while (it != end(impl->tags) && it->rect.translated(-impl->offset()).top() == row &&
+               event->pos().x() > it->rect.translated(-impl->offset()).left()) {
             ++it;
         }
 
         impl->editNewTag(static_cast<size_t>(std::distance(begin(impl->tags), it)));
-        break;
+        return;
     }
+
+    // append a new nag
+    impl->editNewTag(impl->tags.size());
 }
 
 QSize TagsEdit::sizeHint() const {

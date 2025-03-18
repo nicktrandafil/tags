@@ -117,16 +117,7 @@ struct TagsLineEdit::Impl : Common {
     }
 
     int pillsWidth() const {
-        size_t f = 0;
-        size_t l = tags.size() - 1;
-
-        if (f == editing_index) {
-            ++f;
-        } else if (l == editing_index) {
-            --l;
-        }
-
-        return f <= l ? tags[l].rect.right() - tags[f].rect.left() + 1 : 0;
+        return tags.back().rect.right() - tags.front().rect.left();
     }
 
     void updateHScrollRange() {
@@ -139,21 +130,17 @@ struct TagsLineEdit::Impl : Common {
             hscroll_max = 0;
         }
 
-        if (hscroll_max < hscroll) {
-            hscroll = hscroll_max;
-        }
+        hscroll = std::clamp(hscroll, hscroll_min, hscroll_max);
     }
 
     void ensureCursorIsVisible() {
-        auto const contents_rect = contentsRect().translated(hscroll, 0);
+        auto const contents_rect = contentsRect().translated(offset());
         int const cursor_x = (editorRect() - pill_thickness).left() + qRound(cursorToX());
 
-        if (contents_rect.right() <
-            cursor_x + tag_cross_spacing + tag_cross_size + pill_thickness.right() + pills_h_spacing) {
-            hscroll = cursor_x - contents_rect.width() + tag_cross_spacing + tag_cross_size + pill_thickness.right() +
-                      pills_h_spacing;
-        } else if (cursor_x - pill_thickness.left() - pills_h_spacing < contents_rect.left()) {
-            hscroll = cursor_x - pill_thickness.left() - pills_h_spacing;
+        if (contents_rect.right() < cursor_x) {
+            hscroll = cursor_x - contents_rect.width();
+        } else if (cursor_x < contents_rect.left()) {
+            hscroll = cursor_x - 1;
         }
 
         hscroll = std::clamp(hscroll, hscroll_min, hscroll_max);
@@ -199,6 +186,8 @@ void TagsLineEdit::focusInEvent(QFocusEvent*) {
     impl->setCursorVisible(true, this);
     impl->updateDisplayText();
     impl->calcRects();
+    impl->updateHScrollRange();
+    impl->ensureCursorIsVisible();
     update();
 }
 
@@ -206,6 +195,7 @@ void TagsLineEdit::focusOutEvent(QFocusEvent*) {
     impl->setCursorVisible(false, this);
     impl->updateDisplayText();
     impl->calcRects();
+    impl->updateHScrollRange();
     update();
 }
 
@@ -260,6 +250,7 @@ void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
         impl->update1();
     };
 
+    // remove or edit a tag
     for (size_t i = 0; i < impl->tags.size(); ++i) {
         if (!impl->tags[i].rect.translated(-impl->offset()).contains(event->pos())) {
             continue;
@@ -269,7 +260,7 @@ void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
             impl->removeTag(i);
         } else if (impl->editing_index == i) {
             impl->moveCursor(impl->text_layout.lineAt(0).xToCursor(
-                                 (event->pos() - impl->editorRect().translated(-impl->hscroll, 0).topLeft()).x()),
+                                 (event->pos() - impl->editorRect().translated(-impl->offset()).topLeft()).x()),
                              false);
         } else {
             impl->editTag(i);
@@ -278,6 +269,18 @@ void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
         return;
     }
 
+    // add new tag closed to the cursor
+    for (auto it = begin(impl->tags); it != end(impl->tags); ++it) {
+        // find the closest spot
+        if (event->pos().x() > it->rect.translated(-impl->offset()).left()) {
+            continue;
+        }
+
+        impl->editNewTag(static_cast<size_t>(std::distance(begin(impl->tags), it)));
+        return;
+    }
+
+    // append a new nag
     impl->editNewTag(impl->tags.size());
 }
 
