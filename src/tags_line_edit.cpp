@@ -313,18 +313,12 @@ QSize TagsLineEdit::minimumSizeHint() const {
 }
 
 void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
-    event->setAccepted(false);
-    bool unknown = false;
-
     if (event == QKeySequence::SelectAll) {
         impl->selectAll();
-        event->accept();
     } else if (event == QKeySequence::SelectPreviousChar) {
         impl->moveCursor(impl->text_layout.previousCursorPosition(impl->cursor), true);
-        event->accept();
     } else if (event == QKeySequence::SelectNextChar) {
         impl->moveCursor(impl->text_layout.nextCursorPosition(impl->cursor), true);
-        event->accept();
     } else {
         switch (event->key()) {
         case Qt::Key_Left:
@@ -333,7 +327,6 @@ void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
             } else {
                 impl->moveCursor(impl->text_layout.previousCursorPosition(impl->cursor), false);
             }
-            event->accept();
             break;
         case Qt::Key_Right:
             if (impl->cursor == impl->editorText().size()) {
@@ -341,7 +334,6 @@ void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
             } else {
                 impl->moveCursor(impl->text_layout.nextCursorPosition(impl->cursor), false);
             }
-            event->accept();
             break;
         case Qt::Key_Home:
             if (impl->cursor == 0) {
@@ -349,7 +341,6 @@ void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
             } else {
                 impl->moveCursor(0, false);
             }
-            event->accept();
             break;
         case Qt::Key_End:
             if (impl->cursor == impl->editorText().size()) {
@@ -357,7 +348,6 @@ void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
             } else {
                 impl->moveCursor(impl->editorText().length(), false);
             }
-            event->accept();
             break;
         case Qt::Key_Backspace:
             if (!impl->editorText().isEmpty()) {
@@ -365,44 +355,33 @@ void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
             } else if (impl->editing_index > 0) {
                 impl->editPreviousTag();
             }
-            event->accept();
             break;
         case Qt::Key_Space:
             if (!impl->editorText().isEmpty()) {
                 impl->editNewTag(impl->editing_index + 1);
             }
-            event->accept();
             break;
         default:
-            unknown = true;
+            if (isAcceptableInput(*event)) {
+                if (impl->hasSelection()) {
+                    impl->removeSelection();
+                }
+                impl->tags[impl->editing_index].text.insert(impl->cursor, event->text());
+                impl->cursor += event->text().length();
+                break;
+            } else {
+                event->setAccepted(false);
+                return;
+            }
         }
     }
 
-    if (unknown && isAcceptableInput(*event)) {
-        if (impl->hasSelection()) {
-            impl->removeSelection();
-        }
-        impl->tags[impl->editing_index].text.insert(impl->cursor, event->text());
-        impl->cursor += event->text().length();
-        event->accept();
-    }
+    impl->update1();
 
-    if (event->isAccepted()) {
-        // update content
-        impl->updateDisplayText();
-        impl->calcRects();
-        impl->updateHScrollRange();
-        impl->ensureCursorIsVisible();
-        impl->updateCursorBlinking(this);
+    impl->completer->setCompletionPrefix(impl->editorText());
+    impl->completer->complete();
 
-        // complete
-        impl->completer->setCompletionPrefix(impl->editorText());
-        impl->completer->complete();
-
-        update();
-
-        emit tagsEdited();
-    }
+    emit tagsEdited();
 }
 
 void TagsLineEdit::completion(std::vector<QString> const& completions) {
