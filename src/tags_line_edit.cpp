@@ -63,11 +63,11 @@ struct TagsLineEdit::Impl : Common {
         Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, -offset());
     }
 
-    // todo: Add to TagsEdit.
     QRect contentsRect() const {
         QStyleOptionFrame panel;
-        initStyleOption(&panel, ifce);
-        return ifce->style()->subElementRect(QStyle::SE_LineEditContents, &panel, ifce) - magic_margins;
+        initStyleOption(&panel);
+        return ifce->style()->subElementRect(QStyle::SE_LineEditContents, &panel, ifce) - magic_margins -
+               magic_margins2;
     }
 
     void calcRects() {
@@ -155,6 +155,16 @@ struct TagsLineEdit::Impl : Common {
         ifce->update();
     }
 
+    void initStyleOption(QStyleOptionFrame* option) const {
+        assert(option);
+        option->initFrom(ifce);
+        option->rect = ifce->contentsRect();
+        option->lineWidth = ifce->style()->pixelMetric(QStyle::PM_DefaultFrameWidth, option, ifce);
+        option->midLineWidth = 0;
+        option->state |= QStyle::State_Sunken;
+        option->features = QStyleOptionFrame::None;
+    }
+
     TagsLineEdit* const ifce;
 
     int const hscroll_min = 0;
@@ -181,7 +191,8 @@ void TagsLineEdit::resizeEvent(QResizeEvent*) {
     impl->calcRects();
 }
 
-void TagsLineEdit::focusInEvent(QFocusEvent*) {
+void TagsLineEdit::focusInEvent(QFocusEvent* e) {
+    QWidget::focusInEvent(e);
     impl->focused_at = std::chrono::steady_clock::now();
     impl->setCursorVisible(true, this);
     impl->updateDisplayText();
@@ -191,7 +202,8 @@ void TagsLineEdit::focusInEvent(QFocusEvent*) {
     update();
 }
 
-void TagsLineEdit::focusOutEvent(QFocusEvent*) {
+void TagsLineEdit::focusOutEvent(QFocusEvent* e) {
+    QWidget::focusOutEvent(e);
     impl->setCursorVisible(false, this);
     impl->updateDisplayText();
     impl->calcRects();
@@ -199,13 +211,15 @@ void TagsLineEdit::focusOutEvent(QFocusEvent*) {
     update();
 }
 
-void TagsLineEdit::paintEvent(QPaintEvent*) {
+void TagsLineEdit::paintEvent(QPaintEvent* e) {
+    QWidget::paintEvent(e);
+
     QPainter p(this);
 
     // opt
     auto const panel = [this] {
         QStyleOptionFrame panel;
-        initStyleOption(&panel, this);
+        impl->initStyleOption(&panel);
         return panel;
     }();
 
@@ -293,7 +307,7 @@ QSize TagsLineEdit::sizeHint() const {
     rect += magic_margins2;
 
     QStyleOptionFrame opt;
-    initStyleOption(&opt, this);
+    impl->initStyleOption(&opt);
 
     return (style()->sizeFromContents(QStyle::CT_LineEdit, &opt, rect.size(), this));
 }
@@ -307,7 +321,7 @@ QSize TagsLineEdit::minimumSizeHint() const {
     rect += magic_margins2;
 
     QStyleOptionFrame opt;
-    initStyleOption(&opt, this);
+    impl->initStyleOption(&opt);
 
     return (style()->sizeFromContents(QStyle::CT_LineEdit, &opt, rect.size(), this));
 }

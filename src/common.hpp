@@ -350,16 +350,6 @@ inline bool isAcceptableInput(QKeyEvent const& event) {
     return false;
 }
 
-inline void initStyleOption(QStyleOptionFrame* option, QWidget const* widget) {
-    assert(option);
-    option->initFrom(widget);
-    option->rect = widget->contentsRect();
-    option->lineWidth = widget->style()->pixelMetric(QStyle::PM_DefaultFrameWidth, option, widget);
-    option->midLineWidth = 0;
-    option->state |= QStyle::State_Sunken;
-    option->features = QStyleOptionFrame::None;
-}
-
 inline auto elapsed(std::chrono::steady_clock::time_point const& ts) {
     return std::chrono::steady_clock::now() - ts;
 }

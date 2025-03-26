@@ -250,6 +250,7 @@ void TagsEdit::resizeEvent(QResizeEvent* event) {
 }
 
 void TagsEdit::focusInEvent(QFocusEvent* event) {
+    QAbstractScrollArea::focusInEvent(event);
     impl->focused_at = std::chrono::steady_clock::now();
     impl->setCursorVisible(true, this);
     impl->updateDisplayText();
@@ -257,22 +258,20 @@ void TagsEdit::focusInEvent(QFocusEvent* event) {
     impl->ensureCursorIsVisibleH();
     impl->ensureCursorIsVisibleV();
     viewport()->update();
-    QAbstractScrollArea::focusInEvent(event);
 }
 
 void TagsEdit::focusOutEvent(QFocusEvent* event) {
+    QAbstractScrollArea::focusOutEvent(event);
     impl->setCursorVisible(false, this);
     impl->updateDisplayText();
     impl->calcRects(impl->tags);
     viewport()->update();
-    QAbstractScrollArea::focusOutEvent(event);
 }
 
-void TagsEdit::paintEvent(QPaintEvent*) {
-    QPainter p(viewport());
+void TagsEdit::paintEvent(QPaintEvent* e) {
+    QAbstractScrollArea::paintEvent(e);
 
-    // todo: init style options
-    // todo: draw frame
+    QPainter p(viewport());
 
     p.setClipRect(impl->contentsRect());
 

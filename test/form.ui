@@ -18,6 +18,9 @@
     <widget class="everload_tags::TagsLineEdit" name="widget" native="true"/>
    </item>
    <item>
+    <widget class="QLineEdit" name="lineEdit"/>
+   </item>
+   <item>
     <widget class="everload_tags::TagsEdit" name="widget_2" native="true"/>
    </item>
   </layout>
