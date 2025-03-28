@@ -80,28 +80,6 @@ struct TagsEdit::Impl : Common {
                          [this](QString const& text) { setEditorText(text); });
     }
 
-    void setTags(std::vector<QString> const& tags) {
-        std::vector<Tag> t;
-        t.reserve(tags.size());
-        for (auto const& tag : tags) {
-            if (!tag.isEmpty() // Ensure Invariant-1
-                && (!unique    // Ensure Invariant-2
-                    || std::find_if(t.begin(), t.end(), [tag](auto const& x) { return x.text == tag; }) == t.end())) {
-                t.push_back(Tag{tag, QRect()});
-            }
-        }
-        if (t.empty()) { // Ensure Invariant-1
-            t.push_back(Tag{});
-        }
-
-        // Set to Default-state.
-        editing_index = 0;
-        cursor = 0;
-        select_size = 0;
-        select_start = 0;
-        this->tags = std::move(t);
-    }
-
     void calcRects(QPoint& lt, std::vector<Tag>& val, QRect r, QFontMetrics const& fm) const {
         for (auto i = 0u; i < val.size(); ++i) {
             auto& tag = val[i];
@@ -455,16 +433,7 @@ void TagsEdit::completion(std::vector<QString> const& completions) {
 
 void TagsEdit::tags(std::vector<QString> const& tags) {
     impl->setTags(tags);
-    verticalScrollBar()->setValue(0);
-    horizontalScrollBar()->setValue(0);
-    impl->editNewTag(impl->tags.size());
-    impl->updateDisplayText();
-    impl->calcRects(impl->tags);
-    impl->updateHScrollRange();
-    impl->updateVScrollRange();
-    impl->ensureCursorIsVisibleH();
-    impl->ensureCursorIsVisibleV();
-    viewport()->update();
+    impl->update1();
 }
 
 std::vector<QString> TagsEdit::tags() const {

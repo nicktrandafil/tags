@@ -314,6 +314,27 @@ struct Common : Style, Behavior, State {
             --editing_index;
         }
     }
+
+    void setTags(std::vector<QString> const& tags) {
+        // convert
+        std::vector<Tag> t(tags.size());
+        std::transform(tags.begin(), tags.end(), t.begin(), [](QString const& text) { return Tag{text, QRect()}; });
+
+        // Ensure Invariant-1
+        t.erase(std::remove_if(t.begin(), t.end(), [](auto const& x) { return x.text.isEmpty(); }), t.end());
+
+        // Ensure `TagsConfig::unique`
+        if (unique) {
+            t.erase(std::remove_if(t.begin(), t.end(),
+                                   [&tags](auto const& x) { return 1 < std::count(tags.begin(), tags.end(), x.text); }),
+                    t.end());
+        }
+
+        this->tags = std::move(t);
+        this->tags.push_back(Tag{});
+        editing_index = this->tags.size() - 1;
+        moveCursor(0, false);
+    }
 };
 
 // Without this margin the frame is not highlighted if the item is focused

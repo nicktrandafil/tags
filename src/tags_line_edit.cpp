@@ -406,30 +406,8 @@ void TagsLineEdit::completion(std::vector<QString> const& completions) {
 }
 
 void TagsLineEdit::tags(std::vector<QString> const& tags) {
-    std::vector<Tag> t(tags.size());
-    std::transform(tags.begin(), tags.end(), t.begin(), [](QString const& text) { return Tag{text, QRect()}; });
-
-    // Ensure Invariant-1
-    t.erase(std::remove_if(t.begin(), t.end(), [](auto const& x) { return x.text.isEmpty(); }), t.end());
-
-    // Ensure `TagsConfig::unique`
-    if (impl->unique) {
-        t.erase(std::remove_if(t.begin(), t.end(),
-                               [&tags](auto const& x) { return 1 < std::count(tags.begin(), tags.end(), x.text); }),
-                t.end());
-    }
-
-    impl->tags = std::move(t);
-    impl->tags.push_back(Tag{});
-    impl->editing_index = impl->tags.size() - 1;
-    impl->moveCursor(0, false);
-
-    impl->updateDisplayText();
-    impl->calcRects();
-    impl->updateHScrollRange();
-    impl->ensureCursorIsVisible();
-
-    update();
+    impl->setTags(tags);
+    impl->update1();
 }
 
 std::vector<QString> TagsLineEdit::tags() const {

@@ -1,6 +1,7 @@
 #ifndef FORM_H
 #define FORM_H
 
+#include <QSettings>
 #include <QWidget>
 
 namespace Ui {
@@ -13,6 +14,8 @@ class Form : public QWidget {
 public:
     explicit Form(QWidget* parent = nullptr);
     ~Form();
+
+    void closeEvent(QCloseEvent* e) override;
 
 private:
     Ui::Form* ui;
