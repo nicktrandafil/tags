@@ -64,10 +64,7 @@ struct TagsLineEdit::Impl : Common {
     }
 
     QRect contentsRect() const {
-        QStyleOptionFrame panel;
-        initStyleOption(&panel);
-        return ifce->style()->subElementRect(QStyle::SE_LineEditContents, &panel, ifce) - magic_margins -
-               magic_margins2;
+        return ifce->contentsRect() - magic_margins - magic_margins2;
     }
 
     void calcRects() {
