@@ -102,9 +102,7 @@ struct TagsLineEdit::Impl : Common {
     void setEditorText(QString const& text) {
         tags[editing_index].text = text;
         moveCursor(editorText().length(), false);
-        updateDisplayText();
-        calcRects();
-        ifce->update();
+        update1();
     }
 
     void setupCompleter() {

@@ -66,12 +66,9 @@ struct TagsEdit::Impl : Common {
     }
 
     void setEditorText(QString const& text) {
-        // todo: see if updaet1 applicable
         editorText() = text;
         moveCursor(editorText().length(), false);
-        updateDisplayText();
-        calcRectsUpdateScrollRanges();
-        ifce->viewport()->update();
+        update1();
     }
 
     void setupCompleter() {
