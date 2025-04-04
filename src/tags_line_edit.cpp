@@ -143,11 +143,13 @@ struct TagsLineEdit::Impl : Common {
         hscroll = std::clamp(hscroll, hscroll_min, hscroll_max);
     }
 
-    void update1() {
+    void update1(bool keep_cursor_visible = true) {
         updateDisplayText();
         calcRects();
         updateHScrollRange();
-        ensureCursorIsVisible();
+        if (keep_cursor_visible) {
+            ensureCursorIsVisible();
+        }
         updateCursorBlinking(ifce);
         ifce->update();
     }
@@ -257,8 +259,9 @@ void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
         return;
     }
 
+    bool keep_cursor_visible = true;
     EVERLOAD_TAGS_SCOPE_EXIT {
-        impl->update1();
+        impl->update1(keep_cursor_visible);
     };
 
     // remove or edit a tag
@@ -269,6 +272,7 @@ void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
 
         if (impl->inCrossArea(i, event->pos(), impl->offset())) {
             impl->removeTag(i);
+            keep_cursor_visible = false;
         } else if (impl->editing_index == i) {
             impl->moveCursor(impl->text_layout.lineAt(0).xToCursor(
                                  (event->pos() - impl->editorRect().translated(-impl->offset()).topLeft()).x()),

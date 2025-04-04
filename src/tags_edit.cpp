@@ -187,11 +187,13 @@ struct TagsEdit::Impl : Common {
         }
     }
 
-    void update1() {
+    void update1(bool keep_cursor_visible = true) {
         updateDisplayText();
         calcRectsUpdateScrollRanges();
-        ensureCursorIsVisibleV();
-        ensureCursorIsVisibleH();
+        if (keep_cursor_visible) {
+            ensureCursorIsVisibleV();
+            ensureCursorIsVisibleH();
+        }
         updateCursorBlinking(ifce);
         ifce->viewport()->update();
     }
@@ -283,8 +285,9 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
         return;
     }
 
+    bool keep_cursor_visible = true;
     EVERLOAD_TAGS_SCOPE_EXIT {
-        impl->update1();
+        impl->update1(keep_cursor_visible);
     };
 
     // remove or edit a tag
@@ -295,6 +298,7 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
 
         if (impl->inCrossArea(i, event->pos(), impl->offset())) {
             impl->removeTag(i);
+            keep_cursor_visible = false;
         } else if (impl->editing_index == i) {
             impl->moveCursor(impl->text_layout.lineAt(0).xToCursor(
                                  (event->pos() - impl->editorRect().translated(-impl->offset()).topLeft()).x()),
