@@ -337,11 +337,8 @@ struct Common : Style, Behavior, State {
     }
 };
 
-// Without this margin the frame is not highlighted if the item is focused
-inline constexpr QMargins magic_margins = {1, 1, 1, 1};
-
 // ?
-inline constexpr QMargins magic_margins2 = {1, 1, 1, 1};
+inline constexpr QMargins magic_margins = {2, 2, 2, 2};
 
 /// \ref `bool QInputControl::isAcceptableInput(QKeyEvent const* event) const`
 inline bool isAcceptableInput(QKeyEvent const& event) {

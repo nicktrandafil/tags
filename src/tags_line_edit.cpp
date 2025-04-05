@@ -64,7 +64,7 @@ struct TagsLineEdit::Impl : Common {
     }
 
     QRect contentsRect() const {
-        return ifce->contentsRect() - magic_margins - magic_margins2;
+        return ifce->contentsRect() - magic_margins;
     }
 
     void calcRects() {
@@ -303,7 +303,6 @@ QSize TagsLineEdit::sizeHint() const {
     auto const fm = fontMetrics();
     QRect rect(0, 0, impl->pillWidth(fm.boundingRect(QLatin1Char('x')).width() * 17), impl->pillHeight(fm.height()));
     rect += magic_margins;
-    rect += magic_margins2;
 
     QStyleOptionFrame opt;
     impl->initStyleOption(&opt);
@@ -317,7 +316,6 @@ QSize TagsLineEdit::minimumSizeHint() const {
     auto const fm = fontMetrics();
     QRect rect(0, 0, impl->pillWidth(fm.maxWidth()), impl->pillHeight(fm.height()));
     rect += magic_margins;
-    rect += magic_margins2;
 
     QStyleOptionFrame opt;
     impl->initStyleOption(&opt);
