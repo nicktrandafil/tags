@@ -75,9 +75,7 @@ struct TagsLineEdit::Impl : Common {
 
         calcRects(lt, r.height(), std::make_pair(tags.begin(), middle));
 
-        if (cursorVisible()) {
-            calcEditorRect(lt, r.height());
-        } else if (!editorText().isEmpty()) {
+        if (cursorVisible() || !editorText().isEmpty()) {
             calcRects(lt, r.height(), std::make_pair(middle, middle + 1));
         }
 
@@ -91,12 +89,6 @@ struct TagsLineEdit::Impl : Common {
             it->rect = QRect(lt, QSize(pillWidth(text_width), height));
             lt.setX(it->rect.right() + pills_h_spacing);
         }
-    }
-
-    void calcEditorRect(QPoint& lt, int height) {
-        auto const text_width = FONT_METRICS_WIDTH(ifce->fontMetrics(), text_layout.text());
-        setEditorRect(QRect(lt, QSize(pillWidth(text_width), height)));
-        lt.setX(editorRect().right() + pills_h_spacing);
     }
 
     void setEditorText(QString const& text) {

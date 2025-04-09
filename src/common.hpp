@@ -135,10 +135,6 @@ struct State {
         return tags[editing_index].rect;
     }
 
-    void setEditorRect(QRect rect) {
-        tags[editing_index].rect = rect;
-    }
-
     QString const& editorText() const {
         return tags[editing_index].text;
     }

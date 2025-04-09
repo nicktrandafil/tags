@@ -77,50 +77,54 @@ struct TagsEdit::Impl : Common {
                          [this](QString const& text) { setEditorText(text); });
     }
 
-    void calcRects(QPoint& lt, std::vector<Tag>& val, QRect r, QFontMetrics const& fm) const {
-        for (auto i = 0u; i < val.size(); ++i) {
-            auto& tag = val[i];
-            if (i == editing_index && !cursorVisible() && tag.text.isEmpty()) {
-                QRect tmp(lt, QSize(1, pillHeight(fm.height())));
-                if (0 < i) {
-                    tmp.moveRight(tags[i - 1].rect.right());
-                }
-                tag.rect = tmp;
-            } else {
-                QRect i_r(lt, QSize(pillWidth(FONT_METRICS_WIDTH(fm, tag.text)), pillHeight(fm.height())));
+    template <class It>
+    void calcRects(QPoint& lt, QRect const& r, std::pair<It, It> range, QFontMetrics const& fm) const {
+        for (auto it = range.first; it != range.second; ++it) {
+            QRect i_r(lt, QSize(pillWidth(FONT_METRICS_WIDTH(fm, it->text)), pillHeight(fm.height())));
 
-                // line wrapping
-                if (r.right() < i_r.right() && // doesn't fit in current line
-                    i_r.left() != r.left()     // doesn't occupy entire line already
-                ) {
-                    i_r.moveTo(r.left(), i_r.bottom() + tag_v_spacing);
-                    lt = i_r.topLeft();
-                }
-
-                tag.rect = i_r;
-                lt.setX(i_r.right() + pills_h_spacing);
+            // line wrapping
+            if (r.right() < i_r.right() && // doesn't fit in current line
+                i_r.left() != r.left()     // doesn't occupy entire line already
+            ) {
+                i_r.moveTo(r.left(), i_r.bottom() + tag_v_spacing);
+                lt = i_r.topLeft();
             }
+
+            it->rect = i_r;
+            lt.setX(i_r.right() + pills_h_spacing);
         }
+    }
+
+    void calcRects(QPoint& lt, QRect r, QFontMetrics const& fm) {
+        auto const middle = tags.begin() + static_cast<ptrdiff_t>(editing_index);
+
+        calcRects(lt, r, std::make_pair(tags.begin(), middle), fm);
+
+        if (cursorVisible() || !editorText().isEmpty()) {
+            calcRects(lt, r, std::make_pair(middle, middle + 1), fm);
+        }
+
+        calcRects(lt, r, std::make_pair(middle + 1, tags.end()), fm);
+    }
+
+    QRect calcRects(QRect r) {
+        auto lt = r.topLeft();
+        auto const fm = ifce->fontMetrics();
+        calcRects(lt, r, fm);
+        r.setBottom(lt.y() + pillHeight(fm.height()) - 1);
+        return r;
+    }
+
+    QRect calcRects() {
+        return calcRects(contentsRect());
     }
 
     QRect contentsRect() const {
         return ifce->viewport()->contentsRect();
     }
 
-    QRect calcRects(std::vector<Tag>& val) const {
-        return calcRects(val, contentsRect());
-    }
-
-    QRect calcRects(std::vector<Tag>& val, QRect r) const {
-        auto lt = r.topLeft();
-        auto const fm = ifce->fontMetrics();
-        calcRects(lt, val, r, fm);
-        r.setBottom(lt.y() + pillHeight(fm.height()) - 1);
-        return r;
-    }
-
     void calcRectsUpdateScrollRanges() {
-        calcRects(tags);
+        calcRects();
         updateVScrollRange();
         updateHScrollRange();
     }
@@ -220,7 +224,7 @@ TagsEdit::TagsEdit(bool unique, QWidget* parent)
 TagsEdit::~TagsEdit() = default;
 
 void TagsEdit::resizeEvent(QResizeEvent* event) {
-    impl->calcRects(impl->tags);
+    impl->calcRects();
     impl->updateVScrollRange();
     impl->updateHScrollRange();
     QAbstractScrollArea::resizeEvent(event);
@@ -231,7 +235,7 @@ void TagsEdit::focusInEvent(QFocusEvent* event) {
     impl->focused_at = std::chrono::steady_clock::now();
     impl->setCursorVisible(true, this);
     impl->updateDisplayText();
-    impl->calcRects(impl->tags);
+    impl->calcRects();
     impl->ensureCursorIsVisibleH();
     impl->ensureCursorIsVisibleV();
     viewport()->update();
@@ -241,7 +245,7 @@ void TagsEdit::focusOutEvent(QFocusEvent* event) {
     QAbstractScrollArea::focusOutEvent(event);
     impl->setCursorVisible(false, this);
     impl->updateDisplayText();
-    impl->calcRects(impl->tags);
+    impl->calcRects();
     viewport()->update();
 }
 
@@ -346,7 +350,7 @@ int TagsEdit::heightForWidth(int w) const {
     QRect contents_rect(0, 0, content_width, 100);
     contents_rect -= contentsMargins() + viewport()->contentsMargins() + viewportMargins();
     auto tags = impl->tags;
-    contents_rect = impl->calcRects(tags, contents_rect);
+    contents_rect = impl->calcRects(contents_rect);
     contents_rect += contentsMargins() + viewport()->contentsMargins() + viewportMargins();
     return contents_rect.height();
 }
