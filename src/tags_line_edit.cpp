@@ -73,20 +73,21 @@ struct TagsLineEdit::Impl : Common {
 
         auto const middle = tags.begin() + static_cast<ptrdiff_t>(editing_index);
 
-        calcRects(lt, r.height(), std::make_pair(tags.begin(), middle));
+        calcRects(lt, std::make_pair(tags.begin(), middle));
 
         if (cursorVisible() || !editorText().isEmpty()) {
-            calcRects(lt, r.height(), std::make_pair(middle, middle + 1));
+            calcRects(lt, std::make_pair(middle, middle + 1));
         }
 
-        calcRects(lt, r.height(), std::make_pair(middle + 1, tags.end()));
+        calcRects(lt, std::make_pair(middle + 1, tags.end()));
     }
 
     template <class It>
-    void calcRects(QPoint& lt, int height, std::pair<It, It> range) {
+    void calcRects(QPoint& lt, std::pair<It, It> range) {
+        auto const fm = ifce->fontMetrics();
         for (auto it = range.first; it != range.second; ++it) {
-            const auto text_width = FONT_METRICS_WIDTH(ifce->fontMetrics(), it->text);
-            it->rect = QRect(lt, QSize(pillWidth(text_width), height));
+            const auto text_width = FONT_METRICS_WIDTH(fm, it->text);
+            it->rect = QRect(lt, QSize(pillWidth(text_width), pillHeight(fm.height())));
             lt.setX(it->rect.right() + pills_h_spacing);
         }
     }
