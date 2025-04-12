@@ -1,4 +1,5 @@
 # tags
-A widget (Qt5) for tag editing
+A widget (Qt5/Qt6) for tag editing
 
-![See a screenshot](screenshot/example.png)
+![TagsLineEdit](screenshot/example-line-edit.png)
+![TagsEdit](screenshot/example-line-edit.png)
