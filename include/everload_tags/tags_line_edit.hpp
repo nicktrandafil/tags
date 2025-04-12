@@ -35,14 +35,14 @@ struct TagsConfig {
     bool unique = true;
 };
 
-/// Tag editor widget
-/// `Space` commits a tag and initiates a new tag edition
-class Tags : public QWidget {
+/// Single line tag editor widget, simial to `QLineEdit`.
+/// `Space` commits a tag and initiates a new tag edition.
+class TagsLineEdit : public QWidget {
     Q_OBJECT
 
 public:
-    explicit Tags(QWidget* parent = nullptr, TagsConfig const& config = {});
-    ~Tags() override;
+    explicit TagsLineEdit(QWidget* parent = nullptr, TagsConfig const& config = {});
+    ~TagsLineEdit() override;
 
     // QWidget
     QSize sizeHint() const override;

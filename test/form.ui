@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="everload_tags::TagsLineEdit" name="widget" native="true"/>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="lineEdit"/>
+   </item>
+   <item>
+    <widget class="everload_tags::TagsEdit" name="widget_2" native="true"/>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>everload_tags::TagsLineEdit</class>
+   <extends>QWidget</extends>
+   <header location="global">everload_tags/tags_line_edit.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>everload_tags::TagsEdit</class>
+   <extends>QWidget</extends>
+   <header location="global">everload_tags/tags_edit.hpp</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
