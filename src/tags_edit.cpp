@@ -25,7 +25,7 @@
 #include "everload_tags/tags_edit.hpp"
 
 #include "common.hpp"
-#include "scope_exit.h"
+#include "scope_exit.hpp"
 
 #include <QApplication>
 #include <QDebug>
@@ -48,13 +48,7 @@ constexpr int tag_v_spacing = 2;
 } // namespace
 
 struct TagsEdit::Impl : Common {
-    explicit Impl(TagsEdit* ifce, bool unique)
-        : Common{Style{},
-                 Behavior{
-                     .unique = unique,
-                 },
-                 {}},
-          ifce{ifce} {}
+    explicit Impl(TagsEdit* ifce, Config config) : Common{{config.style}, {config.behavior}, {}}, ifce{ifce} {}
 
     QPoint offset() const {
         return QPoint{ifce->horizontalScrollBar()->value(), ifce->verticalScrollBar()->value()};
@@ -62,7 +56,8 @@ struct TagsEdit::Impl : Common {
 
     template <class It>
     void drawTags(QPainter& p, std::pair<It, It> range) const {
-        Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, -offset());
+        Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, color, -offset(),
+                        rounding_x_radius, rounding_y_radius);
     }
 
     void setEditorText(QString const& text) {
@@ -202,8 +197,8 @@ struct TagsEdit::Impl : Common {
     TagsEdit* const ifce;
 };
 
-TagsEdit::TagsEdit(bool unique, QWidget* parent)
-    : QAbstractScrollArea(parent), impl(std::make_unique<Impl>(this, unique)) {
+TagsEdit::TagsEdit(QWidget* parent, Config config)
+    : QAbstractScrollArea(parent), impl(std::make_unique<Impl>(this, config)) {
     QSizePolicy size_policy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     size_policy.setHeightForWidth(true);
     setSizePolicy(size_policy);
@@ -463,6 +458,21 @@ void TagsEdit::mouseMoveEvent(QMouseEvent* event) {
     } else {
         QAbstractScrollArea::mouseMoveEvent(event);
     }
+}
+
+void TagsEdit::config(Config config) {
+    static_cast<StyleConfig&>(*impl) = config.style;
+    if (impl->unique && impl->unique != config.behavior.unique) {
+        impl->removeDuplicates();
+    }
+    impl->update1();
+}
+
+Config TagsEdit::config() const {
+    return Config{
+        .style = static_cast<StyleConfig const&>(*impl),
+        .behavior = static_cast<BehaviorConfig const&>(*impl),
+    };
 }
 
 } // namespace everload_tags

@@ -15,13 +15,19 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="everload_tags::TagsLineEdit" name="widget" native="true"/>
-   </item>
-   <item>
     <widget class="QLineEdit" name="lineEdit"/>
    </item>
    <item>
+    <widget class="everload_tags::TagsLineEdit" name="widget" native="true"/>
+   </item>
+   <item>
     <widget class="everload_tags::TagsEdit" name="widget_2" native="true"/>
+   </item>
+   <item>
+    <widget class="everload_tags::TagsLineEdit" name="widget_3" native="true"/>
+   </item>
+   <item>
+    <widget class="everload_tags::TagsEdit" name="widget_4" native="true"/>
    </item>
   </layout>
  </widget>

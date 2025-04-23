@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "config.hpp"
+
 #include <QAbstractScrollArea>
 
 #include <memory>
@@ -38,7 +40,7 @@ class TagsEdit : public QAbstractScrollArea {
 
 public:
     /// \param unique Ensure tags uniqueness
-    explicit TagsEdit(bool unique = true, QWidget* parent = nullptr);
+    explicit TagsEdit(QWidget* parent = nullptr, Config config = {});
     ~TagsEdit() override;
 
     // QWidget
@@ -54,6 +56,12 @@ public:
 
     /// Get tags
     std::vector<QString> tags() const;
+
+    /// Set config
+    void config(Config config);
+
+    /// Get config
+    Config config() const;
 
 signals:
     void tagsEdited();

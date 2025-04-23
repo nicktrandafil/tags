@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "util.hpp"
+
 #include <QCompleter>
 #include <QFontMetrics>
 #include <QGuiApplication>
@@ -37,6 +39,10 @@
 #include <QTextLayout>
 
 #include <chrono>
+#include <everload_tags/config.hpp>
+#include <ranges>
+#include <unordered_map>
+#include <unordered_set>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
 #define FONT_METRICS_WIDTH(fmt, ...) fmt.width(__VA_ARGS__)
@@ -46,21 +52,7 @@
 
 namespace everload_tags {
 
-struct Tag {
-    QString text;
-    QRect rect;
-};
-
-struct Style {
-    /// Width of painting from text to the the pill border
-    QMargins pill_thickness = {3, 3, 4, 3};
-    /// Space between pills
-    int pills_h_spacing = 4;
-    /// Size of cross side
-    qreal tag_cross_size = 5;
-    /// Distance between text and cross
-    int tag_cross_spacing = 2;
-
+struct Style : StyleConfig {
     static QRectF crossRect(QRectF const& r, qreal cross_size) {
         QRectF cross(QPointF{0, 0}, QSizeF{cross_size, cross_size});
         cross.moveCenter(QPointF(r.right() - cross_size, r.center().y()));
@@ -73,17 +65,17 @@ struct Style {
 
     template <class It>
     static void drawTags(QPainter& p, std::pair<It, It> range, QFontMetrics const& fm, QMargins const& pill_thickness,
-                         qreal cross_size, QPoint const& offset) {
+                         qreal cross_size, QColor const& color, QPoint const& offset, qreal rounding_x_radius,
+                         qreal rounding_y_radius) {
         for (auto it = range.first; it != range.second; ++it) {
             QRect const& i_r = it->rect.translated(offset);
             auto const text_pos =
                 i_r.topLeft() + QPointF(pill_thickness.left(), fm.ascent() + ((i_r.height() - fm.height()) / 2));
 
-            // drag tag rect
-            QColor const blue(0, 96, 100, 150);
+            // draw tag rect
             QPainterPath path;
-            path.addRoundedRect(i_r, 4, 4);
-            p.fillPath(path, blue);
+            path.addRoundedRect(i_r, rounding_x_radius, rounding_y_radius);
+            p.fillPath(path, color);
 
             // draw text
             p.drawText(text_pos, it->text);
@@ -112,8 +104,8 @@ struct Style {
     }
 };
 
-struct Behavior {
-    bool unique; ///<! Turn on/off Invariant-2
+struct Behavior : BehaviorConfig {
+    using BehaviorConfig::unique; /// Turn on/off Invariant-2
 };
 
 // Invariant-1 no empty tags apart from currently being edited.
@@ -235,6 +227,15 @@ struct State {
             editorText().remove(--cursor, 1);
         }
     }
+
+    void removeDuplicates() {
+        everload_tags::removeDuplicates(tags);
+        auto const it = std::find_if(tags.begin(), tags.end(), [](auto const& x) {
+            return x.text.isEmpty(); // Thanks to Invariant-1 we can track back the editing_index.
+        });
+        assert(it != tags.end());
+        editing_index = static_cast<size_t>(std::distance(tags.begin(), it));
+    }
 };
 
 struct Common : Style, Behavior, State {
@@ -312,20 +313,13 @@ struct Common : Style, Behavior, State {
     }
 
     void setTags(std::vector<QString> const& tags) {
-        // convert
-        std::vector<Tag> t(tags.size());
-        std::transform(tags.begin(), tags.end(), t.begin(), [](QString const& text) { return Tag{text, QRect()}; });
-
-        // Ensure Invariant-1
-        t.erase(std::remove_if(t.begin(), t.end(), [](auto const& x) { return x.text.isEmpty(); }), t.end());
-
-        // Ensure `TagsConfig::unique`
-        if (unique) {
-            t.erase(std::remove_if(t.begin(), t.end(),
-                                   [&tags](auto const& x) { return 1 < std::count(tags.begin(), tags.end(), x.text); }),
-                    t.end());
+        std::unordered_set<QString> unique_tags;
+        std::vector<Tag> t;
+        for (auto const& x : tags) {
+            if (/* Invariant-1 */ !x.isEmpty() && /* Invariant-2 */ (!unique || unique_tags.insert(x).second)) {
+                t.emplace_back(x, QRect{});
+            }
         }
-
         this->tags = std::move(t);
         this->tags.push_back(Tag{});
         editing_index = this->tags.size() - 1;

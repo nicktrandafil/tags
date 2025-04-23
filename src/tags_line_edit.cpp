@@ -25,7 +25,7 @@
 #include "everload_tags/tags_line_edit.hpp"
 
 #include "common.hpp"
-#include "scope_exit.h"
+#include "scope_exit.hpp"
 
 #include <QApplication>
 #include <QCompleter>
@@ -40,19 +40,11 @@
 #include <algorithm>
 #include <cassert>
 
-// Invariant-1
-// No empty tags except `editing_index`
-
 namespace everload_tags {
 
 struct TagsLineEdit::Impl : Common {
-    explicit Impl(TagsLineEdit* const& ifce, bool unique)
-        : Common{Style{},
-                 Behavior{
-                     .unique = unique,
-                 },
-                 {}},
-          ifce{ifce} {}
+    explicit Impl(TagsLineEdit* const& ifce, Config config)
+        : Common{{config.style}, {config.behavior}, {}}, ifce{ifce} {}
 
     QPoint offset() const {
         return {hscroll, 0};
@@ -60,7 +52,8 @@ struct TagsLineEdit::Impl : Common {
 
     template <class It>
     void drawTags(QPainter& p, std::pair<It, It> range) const {
-        Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, -offset());
+        Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, color, -offset(),
+                        rounding_x_radius, rounding_y_radius);
     }
 
     QRect contentsRect() const {
@@ -162,8 +155,8 @@ struct TagsLineEdit::Impl : Common {
     int hscroll_max = 0;
 };
 
-TagsLineEdit::TagsLineEdit(QWidget* parent, TagsConfig const& config)
-    : QWidget(parent), impl(std::make_unique<Impl>(this, config.unique)) {
+TagsLineEdit::TagsLineEdit(QWidget* parent, Config config)
+    : QWidget(parent), impl(std::make_unique<Impl>(this, config)) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     setFocusPolicy(Qt::StrongFocus);
     setCursor(Qt::IBeamCursor);
@@ -426,6 +419,21 @@ void TagsLineEdit::wheelEvent(QWheelEvent* event) {
     impl->updateHScrollRange();
     impl->hscroll = std::clamp(impl->hscroll - event->pixelDelta().x(), impl->hscroll_min, impl->hscroll_max);
     update();
+}
+
+void TagsLineEdit::config(Config config) {
+    static_cast<StyleConfig&>(*impl) = config.style;
+    if (impl->unique && impl->unique != config.behavior.unique) {
+        impl->removeDuplicates();
+    }
+    impl->update1();
+}
+
+Config TagsLineEdit::config() const {
+    return Config{
+        .style = static_cast<StyleConfig const&>(*impl),
+        .behavior = static_cast<BehaviorConfig const&>(*impl),
+    };
 }
 
 } // namespace everload_tags

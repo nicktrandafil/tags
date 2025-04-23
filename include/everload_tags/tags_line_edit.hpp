@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "config.hpp"
+
 #include <QWidget>
 
 #include <memory>
@@ -31,17 +33,13 @@
 
 namespace everload_tags {
 
-struct TagsConfig {
-    bool unique = true;
-};
-
 /// Single line tag editor widget, simial to `QLineEdit`.
 /// `Space` commits a tag and initiates a new tag edition.
 class TagsLineEdit : public QWidget {
     Q_OBJECT
 
 public:
-    explicit TagsLineEdit(QWidget* parent = nullptr, TagsConfig const& config = {});
+    explicit TagsLineEdit(QWidget* parent = nullptr, Config config = {});
     ~TagsLineEdit() override;
 
     // QWidget
@@ -56,6 +54,12 @@ public:
 
     /// Get tags
     std::vector<QString> tags() const;
+
+    /// Set config
+    void config(Config config);
+
+    /// Get config
+    Config config() const;
 
 signals:
     void tagsEdited();
