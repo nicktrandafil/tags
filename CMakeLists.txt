@@ -47,11 +47,11 @@ add_library(
   include/${PROJECT_NAME}/config.hpp
   include/${PROJECT_NAME}/tags_line_edit.hpp
   include/${PROJECT_NAME}/tags_edit.hpp
-  src/tags_edit.cpp
-  src/tags_line_edit.cpp
-  src/scope_exit.hpp
-  src/common.hpp
-  src/util.hpp)
+  src/${PROJECT_NAME}/tags_edit.cpp
+  src/${PROJECT_NAME}/tags_line_edit.cpp
+  src/${PROJECT_NAME}/scope_exit.hpp
+  src/${PROJECT_NAME}/common.hpp
+  src/${PROJECT_NAME}/util.hpp)
 
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
@@ -65,7 +65,7 @@ set_target_build_settings(${PROJECT_NAME})
 option(everload_tags_BUILD_TESTING_APP "Build testing app" OFF)
 if(everload_tags_BUILD_TESTING_APP)
   add_executable(app test/app/main.cpp test/app/form.h test/app/form.cpp
-                     test/app/form.ui src/util.hpp)
+                     test/app/form.ui)
   set_target_build_settings(app)
   target_link_libraries(app PRIVATE ${PROJECT_NAME})
 endif()
