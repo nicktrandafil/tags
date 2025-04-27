@@ -17,7 +17,7 @@ Form::Form(QWidget* parent) : QWidget(parent), ui(new Ui::Form) {
         .pills_h_spacing = 7,
         .tag_cross_size = 8,
         .tag_cross_spacing = 3,
-        .color = {255, 164, 100, 100},
+        .color = {255, 7, 100, 100},
         .rounding_x_radius = 5,
         .rounding_y_radius = 10,
     };

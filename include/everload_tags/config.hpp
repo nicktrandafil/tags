@@ -31,24 +31,24 @@ namespace everload_tags {
 
 struct StyleConfig {
     /// Padding from the text to the the pill border
-    QMargins pill_thickness = {3, 3, 4, 3};
+    QMargins pill_thickness = {7, 7, 8, 7};
 
     /// Space between pills
-    int pills_h_spacing = 4;
+    int pills_h_spacing = 7;
 
     /// Size of cross side
-    qreal tag_cross_size = 5;
+    qreal tag_cross_size = 8;
 
     /// Distance between text and the cross
-    int tag_cross_spacing = 2;
+    int tag_cross_spacing = 3;
 
-    QColor color{0, 96, 100, 150};
-
-    /// Rounding of the pill
-    qreal rounding_x_radius = 4;
+    QColor color{255, 164, 100, 100};
 
     /// Rounding of the pill
-    qreal rounding_y_radius = 4;
+    qreal rounding_x_radius = 5;
+
+    /// Rounding of the pill
+    qreal rounding_y_radius = 5;
 };
 
 struct BehaviorConfig {
