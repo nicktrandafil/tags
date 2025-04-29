@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
+cmake_policy(VERSION 3.18)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0022 NEW)
+cmake_policy(SET CMP0071 NEW)
 
 project(everload_tags VERSION 0.1)
 
@@ -21,9 +23,15 @@ endif()
 
 if(NOT ${PROJECT_NAME}_sub)
   find_package(
-    QT NAMES Qt6 Qt5
+    QT NAMES Qt6
     COMPONENTS Widgets
     QUIET)
+  if(NOT ${QT_VERSION_MAJOR} EQUAL 6)
+    find_package(
+    QT NAMES Qt5
+    COMPONENTS Widgets
+    QUIET)
+  endif()
   message(STATUS "Using Qt${QT_VERSION_MAJOR}")
   find_package(Qt${QT_VERSION_MAJOR} REQUIRED QUIET COMPONENTS Widgets)
 endif()
@@ -40,10 +48,18 @@ if(Qt${QT_VERSION_MAJOR}Widgets_VERSION VERSION_LESS 5.12.0)
   message(FATAL_ERROR "Minimum supported Qt5 version is 5.12.0")
 endif()
 
+# Build python bindings
+# TODO: requires Qt6, pyside
+if(QT_VERSION_MAJOR VERSION_LESS 6)
+  message(WARNING " Qt6 is required for python bindings")
+else()
+  find_package(Qt6 REQUIRED QUIET COMPONENTS Widgets Gui Core)
+  include(py/bindings.cmake)
+endif()
+
 # Target
 
-add_library(
-  ${PROJECT_NAME}
+set(${PROJECT_NAME}_sources
   include/${PROJECT_NAME}/config.hpp
   include/${PROJECT_NAME}/tags_line_edit.hpp
   include/${PROJECT_NAME}/tags_edit.hpp
@@ -53,6 +69,10 @@ add_library(
   src/${PROJECT_NAME}/common.hpp
   src/${PROJECT_NAME}/util.hpp)
 
+add_library(
+  ${PROJECT_NAME}
+  SHARED
+  ${${PROJECT_NAME}_sources})
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_include_directories(${PROJECT_NAME} SYSTEM
@@ -94,7 +114,7 @@ if(NOT ${PROJECT_NAME}_sub)
     COMPATIBILITY SameMajorVersion)
 
   install(
-    TARGETS ${PROJECT_NAME}
+    TARGETS ${PROJECT_NAME} ${bindings_library}
     EXPORT ${PROJECT_NAME}-targets
     DESTINATION lib)
 
