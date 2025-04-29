@@ -1,3 +1,9 @@
 *.txt.user*
 build/
 log
+
+# python module files
+*.pyc
+py/*.egg-info
+py/EverloadTags/lib/*
+py/EverloadTags/include/**
