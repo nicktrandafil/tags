@@ -49,12 +49,16 @@ if(Qt${QT_VERSION_MAJOR}Widgets_VERSION VERSION_LESS 5.12.0)
 endif()
 
 # Build python bindings
-# TODO: requires Qt6, pyside
-if(QT_VERSION_MAJOR VERSION_LESS 6)
-  message(WARNING " Qt6 is required for python bindings")
-else()
-  find_package(Qt6 REQUIRED QUIET COMPONENTS Widgets Gui Core)
-  include(py/bindings.cmake)
+option(everload_tags_BUILD_PYTHON_BINDINGS "Build Python Bindings" OFF)
+if(everload_tags_BUILD_PYTHON_BINDINGS)
+  if(QT_VERSION_MAJOR VERSION_LESS 6)
+    message(WARNING " Qt6 is required for python bindings")
+  else()
+    if(NOT ${PROJECT_NAME}_sub)
+      find_package(Qt6 REQUIRED QUIET COMPONENTS Widgets Gui Core)
+    endif()
+    include(py/bindings.cmake)
+  endif()
 endif()
 
 # Target
