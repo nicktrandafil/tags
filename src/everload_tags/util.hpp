@@ -3,18 +3,12 @@
 #include <QRect>
 #include <QString>
 
+#include <everload_tags/config.hpp>
 #include <ranges>
 #include <unordered_map>
 #include <vector>
 
 namespace everload_tags {
-
-struct Tag {
-    QString text;
-    QRect rect;
-
-    bool operator==(Tag const& rhs) const = default;
-};
 
 inline void removeDuplicates(std::vector<Tag>& tags) {
     std::unordered_map<QString, size_t> unique;

@@ -32,6 +32,7 @@
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPoint>
 #include <QRect>
 #include <QString>
 #include <QStyleHints>
@@ -63,44 +64,68 @@ struct Style : StyleConfig {
         return crossRect(r, tag_cross_size);
     }
 
-    template <class It>
-    static void drawTags(QPainter& p, std::pair<It, It> range, QFontMetrics const& fm, QMargins const& pill_thickness,
-                         qreal cross_size, QColor const& color, QPoint const& offset, qreal rounding_x_radius,
-                         qreal rounding_y_radius) {
-        for (auto it = range.first; it != range.second; ++it) {
-            QRect const& i_r = it->rect.translated(offset);
-            auto const text_pos =
-                i_r.topLeft() + QPointF(pill_thickness.left(), fm.ascent() + ((i_r.height() - fm.height()) / 2));
+    template <std::ranges::output_range<Tag> Range>
+    static void calcRects(QPoint& lt, Range&& tags, StyleConfig const& style, QFontMetrics const& fm,
+                          std::optional<QRect> const& fit, bool has_cross) {
+        for (auto& tag : tags) {
+            auto const text_width = FONT_METRICS_WIDTH(fm, tag.text);
+            QRect rect(lt, QSize(style.pillWidth(text_width, has_cross), style.pillHeight(fm.height())));
 
-            // draw tag rect
-            QPainterPath path;
-            path.addRoundedRect(i_r, rounding_x_radius, rounding_y_radius);
-            p.fillPath(path, color);
+            if (fit) {
+                if (fit->right() < rect.right() && // doesn't fit in current line
+                    rect.left() != fit->left()     // doesn't occupy entire line already
+                ) {
+                    rect.moveTo(fit->left(), rect.bottom() + style.tag_v_spacing);
+                    lt = rect.topLeft();
+                }
+            }
 
-            // draw text
-            p.drawText(text_pos, it->text);
-
-            // calc cross rect
-            auto const i_cross_r = Style::crossRect(i_r, cross_size);
-
-            QPen pen = p.pen();
-            pen.setWidth(2);
-
-            p.save();
-            p.setPen(pen);
-            p.setRenderHint(QPainter::Antialiasing);
-            p.drawLine(QLineF(i_cross_r.topLeft(), i_cross_r.bottomRight()));
-            p.drawLine(QLineF(i_cross_r.bottomLeft(), i_cross_r.topRight()));
-            p.restore();
+            tag.rect = rect;
+            lt.setX(rect.right() + style.pills_h_spacing);
         }
     }
 
-    int pillWidth(int text_width) const {
-        return text_width + pill_thickness.left() + tag_cross_spacing + tag_cross_size + pill_thickness.right();
+    template <std::ranges::output_range<Tag> Range>
+    void calcRects(QPoint& lt, Range&& tags, QFontMetrics const& fm,
+                   std::optional<QRect> const& fit = std::nullopt) const {
+        calcRects(lt, tags, *this, fm, fit, true);
     }
 
-    int pillHeight(int text_height) const {
-        return text_height + pill_thickness.top() + pill_thickness.bottom();
+    template <std::ranges::input_range Range>
+    static void drawTags(QPainter& p, Range&& tags, StyleConfig const& style, QFontMetrics const& fm,
+                         QPoint const& offset, bool has_cross) {
+        for (auto const& tag : tags) {
+            QRect const& i_r = tag.rect.translated(offset);
+            auto const text_pos =
+                i_r.topLeft() + QPointF(style.pill_thickness.left(), fm.ascent() + ((i_r.height() - fm.height()) / 2));
+
+            // draw tag rect
+            QPainterPath path;
+            path.addRoundedRect(i_r, style.rounding_x_radius, style.rounding_y_radius);
+            p.fillPath(path, style.color);
+
+            // draw text
+            p.drawText(text_pos, tag.text);
+
+            if (has_cross) {
+                auto const i_cross_r = crossRect(i_r, style.tag_cross_size);
+
+                QPen pen = p.pen();
+                pen.setWidth(2);
+
+                p.save();
+                p.setPen(pen);
+                p.setRenderHint(QPainter::Antialiasing);
+                p.drawLine(QLineF(i_cross_r.topLeft(), i_cross_r.bottomRight()));
+                p.drawLine(QLineF(i_cross_r.bottomLeft(), i_cross_r.topRight()));
+                p.restore();
+            }
+        }
+    }
+
+    template <std::ranges::input_range Range>
+    void drawTags(QPainter& p, Range&& tags, QFontMetrics const& fm, QPoint const& offset) const {
+        drawTags(p, tags, *this, fm, offset, true);
     }
 };
 

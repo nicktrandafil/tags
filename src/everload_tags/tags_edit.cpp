@@ -41,11 +41,6 @@
 #include <cassert>
 
 namespace everload_tags {
-namespace {
-
-constexpr int tag_v_spacing = 2;
-
-} // namespace
 
 struct TagsEdit::Impl : Common {
     explicit Impl(TagsEdit* ifce, Config config) : Common{{config.style}, {config.behavior}, {}}, ifce{ifce} {}
@@ -54,10 +49,11 @@ struct TagsEdit::Impl : Common {
         return QPoint{ifce->horizontalScrollBar()->value(), ifce->verticalScrollBar()->value()};
     }
 
-    template <class It>
-    void drawTags(QPainter& p, std::pair<It, It> range) const {
-        Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, color, -offset(),
-                        rounding_x_radius, rounding_y_radius);
+    using Common::drawTags;
+
+    template <std::ranges::input_range Range>
+    void drawTags(QPainter& p, Range range) const {
+        drawTags(p, range, ifce->fontMetrics(), -offset());
     }
 
     void setEditorText(QString const& text) {
@@ -72,40 +68,24 @@ struct TagsEdit::Impl : Common {
                          [this](QString const& text) { setEditorText(text); });
     }
 
-    template <class It>
-    void calcRects(QPoint& lt, QRect const& r, std::pair<It, It> range, QFontMetrics const& fm) const {
-        for (auto it = range.first; it != range.second; ++it) {
-            QRect i_r(lt, QSize(pillWidth(FONT_METRICS_WIDTH(fm, it->text)), pillHeight(fm.height())));
+    using Common::calcRects;
 
-            // line wrapping
-            if (r.right() < i_r.right() && // doesn't fit in current line
-                i_r.left() != r.left()     // doesn't occupy entire line already
-            ) {
-                i_r.moveTo(r.left(), i_r.bottom() + tag_v_spacing);
-                lt = i_r.topLeft();
-            }
-
-            it->rect = i_r;
-            lt.setX(i_r.right() + pills_h_spacing);
-        }
-    }
-
-    void calcRects(QPoint& lt, QRect r, QFontMetrics const& fm) {
+    void calcRects(QRect r, QPoint& lt, QFontMetrics const& fm) {
         auto const middle = tags.begin() + static_cast<ptrdiff_t>(editing_index);
 
-        calcRects(lt, r, std::make_pair(tags.begin(), middle), fm);
+        calcRects(lt, std::ranges::subrange(tags.begin(), middle), fm, r);
 
         if (cursorVisible() || !editorText().isEmpty()) {
-            calcRects(lt, r, std::make_pair(middle, middle + 1), fm);
+            calcRects(lt, std::ranges::subrange(middle, middle + 1), fm, r);
         }
 
-        calcRects(lt, r, std::make_pair(middle + 1, tags.end()), fm);
+        calcRects(lt, std::ranges::subrange(middle + 1, tags.end()), fm, r);
     }
 
     QRect calcRects(QRect r) {
         auto lt = r.topLeft();
         auto const fm = ifce->fontMetrics();
-        calcRects(lt, r, fm);
+        calcRects(r, lt, fm);
         r.setBottom(lt.y() + pillHeight(fm.height()) - 1);
         return r;
     }
@@ -254,17 +234,17 @@ void TagsEdit::paintEvent(QPaintEvent* e) {
     auto const middle = impl->tags.cbegin() + static_cast<ptrdiff_t>(impl->editing_index);
 
     // tags
-    impl->drawTags(p, std::make_pair(impl->tags.cbegin(), middle));
+    impl->drawTags(p, std::ranges::subrange(impl->tags.cbegin(), middle));
 
     // todo: draw in one round all if the editor is inactive else, have this 3-part drawing.
     if (impl->cursorVisible()) {
         impl->drawEditor(p, palette(), impl->offset());
     } else if (!impl->editorText().isEmpty()) {
-        impl->drawTags(p, std::make_pair(middle, middle + 1));
+        impl->drawTags(p, std::ranges::subrange(middle, middle + 1));
     }
 
     // tags
-    impl->drawTags(p, std::make_pair(middle + 1, impl->tags.cend()));
+    impl->drawTags(p, std::ranges::subrange(middle + 1, impl->tags.cend()));
 }
 
 void TagsEdit::timerEvent(QTimerEvent* event) {
@@ -337,7 +317,7 @@ QSize TagsEdit::sizeHint() const {
 QSize TagsEdit::minimumSizeHint() const {
     ensurePolished();
     QFontMetrics fm = fontMetrics();
-    QRect rect(0, 0, impl->pillWidth(fm.maxWidth()), impl->pillHeight(fm.height()));
+    QRect rect(0, 0, impl->pillWidth(fm.maxWidth(), true), impl->pillHeight(fm.height()));
     rect += contentsMargins() + viewport()->contentsMargins() + viewportMargins();
     return rect.size();
 }

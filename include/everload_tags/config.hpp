@@ -25,9 +25,25 @@
 #pragma once
 
 #include <QColor>
+#include <QFontMetrics>
 #include <QMargins>
+#include <QPoint>
+#include <QRect>
+#include <QSize>
+
+#include <optional>
+#include <vector>
 
 namespace everload_tags {
+
+struct Tag {
+    QString text;
+    QRect rect;
+
+    bool operator==(Tag const& rhs) const {
+        return text == rhs.text && rect == rhs.rect;
+    }
+};
 
 struct StyleConfig {
     /// Padding from the text to the the pill border
@@ -35,6 +51,9 @@ struct StyleConfig {
 
     /// Space between pills
     int pills_h_spacing = 7;
+
+    /// Space between rows of pills (for multi line tags)
+    int tag_v_spacing = 2;
 
     /// Size of cross side
     qreal tag_cross_size = 8;
@@ -49,6 +68,24 @@ struct StyleConfig {
 
     /// Rounding of the pill
     qreal rounding_y_radius = 5;
+
+    /// Calculate the width that a tag would have with the given text width
+    int pillWidth(int text_width, bool has_cross) const {
+        return text_width + pill_thickness.left() + (has_cross ? (tag_cross_spacing + tag_cross_size) : 0) +
+               pill_thickness.right();
+    }
+
+    /// Calculate the height that a tag would have with the given text height
+    int pillHeight(int text_height) const {
+        return text_height + pill_thickness.top() + pill_thickness.bottom();
+    }
+
+    /// \param fit When nullopt arranges the tags in a line
+    void calcRects(QPoint& lt, std::vector<Tag>& tags, QFontMetrics const& fm, std::optional<QRect> const& fit,
+                   bool has_cross) const;
+
+    void drawTags(QPainter& p, std::vector<Tag> const& tags, QFontMetrics const& fm, QPoint const& translate,
+                  bool has_cross) const;
 };
 
 struct BehaviorConfig {

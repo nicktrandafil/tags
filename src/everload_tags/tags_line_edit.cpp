@@ -50,15 +50,18 @@ struct TagsLineEdit::Impl : Common {
         return {hscroll, 0};
     }
 
-    template <class It>
-    void drawTags(QPainter& p, std::pair<It, It> range) const {
-        Style::drawTags(p, range, ifce->fontMetrics(), pill_thickness, tag_cross_size, color, -offset(),
-                        rounding_x_radius, rounding_y_radius);
+    using Common::drawTags;
+
+    template <std::ranges::input_range Range>
+    void drawTags(QPainter& p, Range range) const {
+        drawTags(p, range, ifce->fontMetrics(), -offset());
     }
 
     QRect contentsRect() const {
         return ifce->contentsRect() - magic_margins;
     }
+
+    using Common::calcRects;
 
     void calcRects() {
         auto const r = contentsRect();
@@ -66,23 +69,13 @@ struct TagsLineEdit::Impl : Common {
 
         auto const middle = tags.begin() + static_cast<ptrdiff_t>(editing_index);
 
-        calcRects(lt, std::make_pair(tags.begin(), middle));
+        calcRects(lt, std::ranges::subrange(tags.begin(), middle), ifce->fontMetrics());
 
         if (cursorVisible() || !editorText().isEmpty()) {
-            calcRects(lt, std::make_pair(middle, middle + 1));
+            calcRects(lt, std::ranges::subrange(middle, middle + 1), ifce->fontMetrics());
         }
 
-        calcRects(lt, std::make_pair(middle + 1, tags.end()));
-    }
-
-    template <class It>
-    void calcRects(QPoint& lt, std::pair<It, It> range) {
-        auto const fm = ifce->fontMetrics();
-        for (auto it = range.first; it != range.second; ++it) {
-            const auto text_width = FONT_METRICS_WIDTH(fm, it->text);
-            it->rect = QRect(lt, QSize(pillWidth(text_width), pillHeight(fm.height())));
-            lt.setX(it->rect.right() + pills_h_spacing);
-        }
+        calcRects(lt, std::ranges::subrange(middle + 1, tags.end()), ifce->fontMetrics());
     }
 
     void setEditorText(QString const& text) {
@@ -216,17 +209,17 @@ void TagsLineEdit::paintEvent(QPaintEvent* e) {
     auto const middle = impl->tags.cbegin() + static_cast<ptrdiff_t>(impl->editing_index);
 
     // tags
-    impl->drawTags(p, std::make_pair(impl->tags.cbegin(), middle));
+    impl->drawTags(p, std::ranges::subrange(impl->tags.cbegin(), middle));
 
     // todo: draw in one round all if the editor is inactive else, have this 3-part drawing.
     if (impl->cursorVisible()) {
         impl->drawEditor(p, palette(), impl->offset());
     } else if (!impl->editorText().isEmpty()) {
-        impl->drawTags(p, std::make_pair(middle, middle + 1));
+        impl->drawTags(p, std::ranges::subrange(middle, middle + 1));
     }
 
     // tags
-    impl->drawTags(p, std::make_pair(middle + 1, impl->tags.cend()));
+    impl->drawTags(p, std::ranges::subrange(middle + 1, impl->tags.cend()));
 }
 
 void TagsLineEdit::timerEvent(QTimerEvent* event) {
@@ -289,7 +282,8 @@ QSize TagsLineEdit::sizeHint() const {
     ensurePolished();
 
     auto const fm = fontMetrics();
-    QRect rect(0, 0, impl->pillWidth(fm.boundingRect(QLatin1Char('x')).width() * 17), impl->pillHeight(fm.height()));
+    QRect rect(0, 0, impl->pillWidth(fm.boundingRect(QLatin1Char('x')).width() * 17, true),
+               impl->pillHeight(fm.height()));
     rect += magic_margins;
 
     QStyleOptionFrame opt;
@@ -302,7 +296,7 @@ QSize TagsLineEdit::minimumSizeHint() const {
     ensurePolished();
 
     auto const fm = fontMetrics();
-    QRect rect(0, 0, impl->pillWidth(fm.maxWidth()), impl->pillHeight(fm.height()));
+    QRect rect(0, 0, impl->pillWidth(fm.maxWidth(), true), impl->pillHeight(fm.height()));
     rect += magic_margins;
 
     QStyleOptionFrame opt;
