@@ -258,9 +258,11 @@ void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
             impl->removeTag(i);
             keep_cursor_visible = false;
         } else if (impl->editing_index == i) {
-            impl->moveCursor(impl->text_layout.lineAt(0).xToCursor(
-                                 (event->pos() - impl->editorRect().translated(-impl->offset()).topLeft()).x()),
-                             false);
+            impl->moveCursor(
+                impl->text_layout.lineAt(0).xToCursor(
+                    (event->pos() - (impl->editorRect() - impl->pill_thickness).translated(-impl->offset()).topLeft())
+                        .x()),
+                false);
         } else {
             impl->editTag(i);
         }
