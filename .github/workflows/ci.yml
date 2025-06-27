@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        qt-version: [5, 6]
+        build-type: [Debug, Release]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Qt${{ matrix.qt-version }}
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ matrix.qt-version == 5 && '5.15.2' || '6.5.0' }}
+        host: 'linux'
+        target: 'desktop'
+        arch: 'gcc_64'
+        modules: 'qtwidgets'
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build libcatch2-dev
+    
+    - name: Configure CMake
+      run: |
+        cmake . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+          -Deverload_tags_TEST=ON \
+          -Deverload_tags_BUILD_TESTING_APP=ON
+    
+    - name: Build
+      run: ninja -C build
+    
+    - name: Run tests
+      run: ./build/test_everload_tags
+    
+    - name: Test installation
+      run: |
+        cmake --install build --prefix install_test
+        ls -la install_test/
