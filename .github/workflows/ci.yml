@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      matrix:
+        build_type:
+          - Debug
+          - Release
+        compiler:
+          - cxx: g++
+            cc: gcc
+          - cxx: clang++
+            cc: clang
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build catch2 qt6-base-dev
+    
+    - name: Configure CMake
+      env:
+        CC: ${{matrix.compiler.cc}}
+        CXX: ${{matrix.compiler.cxx}}
+      run: |
+        cmake . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+          -Deverload_tags_TEST=ON \
+          -Deverload_tags_BUILD_TESTING_APP=ON
+
+    - name: Build
+      run: ninja -C build
+    
+    - name: Run tests
+      run: ./build/test_everload_tags
+    
+    - name: Test installation
+      run: |
+        cmake --install build --prefix install_test
+        ls -la install_test/

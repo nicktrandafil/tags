@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ '6.6.1' }}
+        host: 'linux'
+        target: 'desktop'
+        arch: 'gcc_64'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build clang-19 llvm-19-dev
+
+    - name: Set a default clang compiler
+      run: |
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+        sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+        sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-19 100
+
+    - name: Prepare Python virtualenv
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1 shiboken6_generator==6.6.1
+
+    - name: Configure CMake
+      run: |
+        source venv/bin/activate
+        cmake . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -Deverload_tags_TEST=OFF \
+          -Deverload_tags_BUILD_TESTING_APP=ON \
+          -Deverload_tags_BUILD_PYTHON_BINDINGS=ON
+
+    - name: Build
+      run: |
+        source venv/bin/activate
+        ninja -C build
+
+    - name: Install
+      run: |
+        source venv/bin/activate
+        cmake --install build --prefix py/EverloadTags
+
+    - name: Run
+      run: |
+        source venv/bin/activate
+        export QT_QPA_PLATFORM=offscreen
+        timeout 3s env LD_LIBRARY_PATH=$VIRTUAL_ENV/lib/python3.13/site-packages/PySide6 python py/demo.py || rc=$?
+        if [[ $rc -ne 124 ]]; then exit 1; fi
