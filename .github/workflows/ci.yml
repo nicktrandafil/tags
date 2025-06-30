@@ -25,7 +25,6 @@ jobs:
         host: 'linux'
         target: 'desktop'
         arch: 'gcc_64'
-        modules: ${{ matrix.qt-version == 6 && 'qtbase' || '' }}
     
     - name: Install dependencies
       run: |
