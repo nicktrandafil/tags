@@ -8,28 +8,26 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
-    
+    runs-on: ubuntu-24.04
+
     strategy:
       matrix:
-        qt-version: [5, 6]
-        build-type: [Debug, Release]
+        build_type:
+          - Debug
+          - Release
+        compiler:
+          - cxx: g++
+            cc: gcc
+          - cxx: clang++
+            cc: clang
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install Qt${{ matrix.qt-version }}
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: ${{ matrix.qt-version == 5 && '5.15.2' || '6.5.0' }}
-        host: 'linux'
-        target: 'desktop'
-        arch: 'gcc_64'
-    
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build catch2
+        sudo apt-get install -y ninja-build catch2 qt6-base-dev
     
     - name: Configure CMake
       run: |
