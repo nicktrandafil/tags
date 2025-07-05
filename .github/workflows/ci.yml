@@ -30,6 +30,9 @@ jobs:
         sudo apt-get install -y ninja-build catch2 qt6-base-dev
     
     - name: Configure CMake
+      env:
+        CC: ${{matrix.compiler.cc}}
+        CXX: ${{matrix.compiler.cxx}}
       run: |
         cmake . -B build -G Ninja \
           -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
