@@ -20,6 +20,9 @@ jobs:
             cc: gcc
           - cxx: clang++
             cc: clang
+        enable_python_module:
+          - state: ON
+          - state: OFF
     
     steps:
     - uses: actions/checkout@v4
@@ -38,7 +41,8 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
           -Deverload_tags_TEST=ON \
           -Deverload_tags_BUILD_TESTING_APP=ON
-    
+          -Deverload_tags_BUILD_PYTHON_BINDINGS=${{ matrix.enable_python_module }}
+
     - name: Build
       run: ninja -C build
     
@@ -49,3 +53,13 @@ jobs:
       run: |
         cmake --install build --prefix install_test
         ls -la install_test/
+
+    - name: Python module
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install pyside6 shiboken6 shiboken6-generator
+        cmake . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+          -Deverload_tags_TEST=ON \
+          -Deverload_tags_BUILD_TESTING_APP=ON
