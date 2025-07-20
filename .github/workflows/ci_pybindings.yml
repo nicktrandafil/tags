@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build qt6-base-dev xvfb
+
+    - name: Prepare Python virtualenv
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install pyside6 shiboken6 shiboken6-generator
+
+    - name: Configure CMake
+      run: |
+        python -m venv venv
+        cmake . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -Deverload_tags_TEST=OFF \
+          -Deverload_tags_BUILD_TESTING_APP=ON \
+          -Deverload_tags_BUILD_PYTHON_BINDINGS=ON
+
+    - name: Build
+      run: ninja -C build
+
+    - name: Install
+      run: |
+        cmake --install build --prefix py/EverloadTags
+
+    - name: Run
+      run: |
+        Xvfb :99 -screen 0 1024x768x16 &
+        export DISPLAY=:99
+        timeout 3s env LD_LIBRARY_PATH=$VIRTUAL_ENV/lib/python3.13/site-packages/PySide6 python py/demo.py
+        if [[ $? -ne 124 ]]; then exit 1; fi
