@@ -26,7 +26,7 @@ jobs:
 
     - name: Configure CMake
       run: |
-        python -m venv venv
+        source venv/bin/activate
         cmake . -B build -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
           -Deverload_tags_TEST=OFF \
@@ -34,14 +34,18 @@ jobs:
           -Deverload_tags_BUILD_PYTHON_BINDINGS=ON
 
     - name: Build
-      run: ninja -C build
+      run: |
+        source venv/bin/activate
+        ninja -C build
 
     - name: Install
       run: |
+        source venv/bin/activate
         cmake --install build --prefix py/EverloadTags
 
     - name: Run
       run: |
+        source venv/bin/activate
         Xvfb :99 -screen 0 1024x768x16 &
         export DISPLAY=:99
         timeout 3s env LD_LIBRARY_PATH=$VIRTUAL_ENV/lib/python3.13/site-packages/PySide6 python py/demo.py
