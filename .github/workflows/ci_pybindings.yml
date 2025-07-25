@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build qt6-base-dev xvfb
+        sudo apt-get install -y ninja-build qt6-base-dev clang-19 xvfb
 
     - name: Prepare Python virtualenv
       run: |
