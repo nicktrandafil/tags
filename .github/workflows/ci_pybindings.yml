@@ -13,16 +13,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ '6.6.1' }}
+        host: 'linux'
+        target: 'desktop'
+        arch: 'gcc_64'
+        modules: 'qtwidgets'
+
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build qt6-base-dev clang-19 xvfb
+        sudo apt-get install -y ninja-build clang-19 xvfb
 
     - name: Prepare Python virtualenv
       run: |
         python -m venv venv
         source venv/bin/activate
-        pip install pyside6 shiboken6 shiboken6-generator
+        pip install PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1 shiboken6_generator==6.6.1
 
     - name: Configure CMake
       run: |
