@@ -24,7 +24,13 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build clang-19 xvfb
+        sudo apt-get install -y ninja-build clang-19 llvm-19-dev xvfb
+
+    - name: Set a default clang compiler
+      run: |
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+        sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+        sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-19 100
 
     - name: Prepare Python virtualenv
       run: |
