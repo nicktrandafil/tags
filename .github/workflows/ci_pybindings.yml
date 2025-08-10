@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build clang-19 llvm-19-dev xvfb
+        sudo apt-get install -y ninja-build clang-19 llvm-19-dev
 
     - name: Set a default clang compiler
       run: |
@@ -60,7 +60,6 @@ jobs:
     - name: Run
       run: |
         source venv/bin/activate
-        Xvfb :99 -screen 0 1024x768x16 &
-        export DISPLAY=:99
+        export QT_QPA_PLATFORM=offscreen
         timeout 3s env LD_LIBRARY_PATH=$VIRTUAL_ENV/lib/python3.13/site-packages/PySide6 python py/demo.py
         if [[ $? -ne 124 ]]; then exit 1; fi
