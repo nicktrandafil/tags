@@ -61,5 +61,5 @@ jobs:
       run: |
         source venv/bin/activate
         export QT_QPA_PLATFORM=offscreen
-        timeout 3s env LD_LIBRARY_PATH=$VIRTUAL_ENV/lib/python3.13/site-packages/PySide6 python py/demo.py
-        if [[ $? -ne 124 ]]; then exit 1; fi
+        timeout 3s env LD_LIBRARY_PATH=$VIRTUAL_ENV/lib/python3.13/site-packages/PySide6 python py/demo.py || rc=$?
+        if [[ $rc -ne 124 ]]; then exit 1; fi
