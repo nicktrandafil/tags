@@ -91,7 +91,20 @@ struct TagsLineEdit::Impl : Common {
     }
 
     int pillsWidth() const {
-        return tags.back().rect.right() - tags.front().rect.left();
+        if (tags.size() == 1 && tags.front().text.isEmpty()) {
+            return 0;
+        }
+
+        int left = tags.front().rect.left();
+        int right = tags.back().rect.right();
+
+        if (editing_index == 0 && !(cursorVisible() || !editorText().isEmpty())) {
+            left = tags[1].rect.left();
+        } else if (editing_index == tags.size() - 1 && !(cursorVisible() || !editorText().isEmpty())) {
+            right = tags[tags.size() - 2].rect.right();
+        }
+
+        return right - left + 1;
     }
 
     void updateHScrollRange() {

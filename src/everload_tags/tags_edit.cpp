@@ -105,12 +105,28 @@ struct TagsEdit::Impl : Common {
     }
 
     void updateVScrollRange() {
+        if (tags.size() == 1 && tags.front().text.isEmpty()) {
+            ifce->verticalScrollBar()->setRange(0, 0);
+            return;
+        }
+
         auto const fm = ifce->fontMetrics();
         auto const row_h = pillHeight(fm.height()) + tag_v_spacing;
         ifce->verticalScrollBar()->setPageStep(row_h);
         assert(!tags.empty()); // Invariant-1
-        auto const h = tags.back().rect.bottom() - tags.front().rect.top() + 1;
+
+        int top = tags.front().rect.top();
+        int bottom = tags.back().rect.bottom();
+
+        if (editing_index == 0 && !(cursorVisible() || !editorText().isEmpty())) {
+            top = tags[1].rect.top();
+        } else if (editing_index == tags.size() - 1 && !(cursorVisible() || !editorText().isEmpty())) {
+            bottom = tags[tags.size() - 2].rect.bottom();
+        }
+
+        auto const h = bottom - top + 1;
         auto const contents_rect = contentsRect();
+
         if (contents_rect.height() < h) {
             ifce->verticalScrollBar()->setRange(0, h - contents_rect.height());
         } else {
@@ -199,10 +215,8 @@ TagsEdit::TagsEdit(QWidget* parent, Config config)
 TagsEdit::~TagsEdit() = default;
 
 void TagsEdit::resizeEvent(QResizeEvent* event) {
-    impl->calcRects();
-    impl->updateVScrollRange();
-    impl->updateHScrollRange();
     QAbstractScrollArea::resizeEvent(event);
+    impl->calcRectsUpdateScrollRanges();
 }
 
 void TagsEdit::focusInEvent(QFocusEvent* event) {
@@ -210,7 +224,7 @@ void TagsEdit::focusInEvent(QFocusEvent* event) {
     impl->focused_at = std::chrono::steady_clock::now();
     impl->setCursorVisible(true, this);
     impl->updateDisplayText();
-    impl->calcRects();
+    impl->calcRectsUpdateScrollRanges();
     impl->ensureCursorIsVisibleH();
     impl->ensureCursorIsVisibleV();
     viewport()->update();
@@ -220,7 +234,7 @@ void TagsEdit::focusOutEvent(QFocusEvent* event) {
     QAbstractScrollArea::focusOutEvent(event);
     impl->setCursorVisible(false, this);
     impl->updateDisplayText();
-    impl->calcRects();
+    impl->calcRectsUpdateScrollRanges();
     viewport()->update();
 }
 
