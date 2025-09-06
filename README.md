@@ -1,3 +1,6 @@
+[![Build Status](https://github.com/nicktrandafil/tags/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nicktrandafil/tags/actions/workflows/ci.yml]
+[![Pybindings](https://github.com/nicktrandafil/tags/actions/workflows/ci_pybindings.yml/badge.svg?branch=main)](https://github.com/nicktrandafil/tags/actions/workflows/ci_pybindings.yml]
+
 # tags
 
 A widget (Qt5/Qt6) for tag editing
