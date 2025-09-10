@@ -1,4 +1,4 @@
-name: Build and run Python demo app
+name: Pybindings
 
 on:
   push:
