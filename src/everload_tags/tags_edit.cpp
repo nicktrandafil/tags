@@ -271,7 +271,7 @@ void TagsEdit::timerEvent(QTimerEvent* event) {
 void TagsEdit::mousePressEvent(QMouseEvent* event) {
     // we don't want to change cursor position if this event is part of focusIn
     using namespace std::chrono_literals;
-    if (elapsed(impl->focused_at) < 1ms) {
+    if (impl->restore_cursor_position_on_focus_click && elapsed(impl->focused_at) < 1ms) {
         return;
     }
 

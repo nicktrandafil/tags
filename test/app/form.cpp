@@ -48,6 +48,11 @@ Form::Form(QWidget* parent) : QWidget(parent), ui(new Ui::Form) {
         .rounding_y_radius = 10,
     };
 
+    BehaviorConfig behavior{
+        .unique = false,
+        .restore_cursor_position_on_focus_click = true,
+    };
+
     QSettings settings;
 
     {
@@ -58,6 +63,7 @@ Form::Form(QWidget* parent) : QWidget(parent), ui(new Ui::Form) {
     {
         auto const tags = settings.value(box_tags).value<QVector<QString>>();
         ui->widget_2->tags(vector<QString>{tags.begin(), tags.end()});
+        ui->widget_2->config(Config{.behavior = behavior});
     }
 
     {

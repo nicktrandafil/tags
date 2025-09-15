@@ -11,7 +11,7 @@ class MainWindow(QWidget):
         self.setWindowTitle("EverloadTags Demo")
 
         self.config = ET.Config()
-
+        self.config.behavior.restore_cursor_position_on_focus_click = True
         self.config.style.color = QColor(255, 0, 255, 255)
         self.tags = ["tag1", "tag2", "tag3", "tag4", "tag5"]
         self.edit_tags = ["edit1", "edit2", "edit3"]

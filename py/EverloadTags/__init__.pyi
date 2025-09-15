@@ -5,6 +5,7 @@ import typing
 
 class BehaviorConfig:
     unique: bool
+    restore_cursor_position_on_focus_click: bool
 
 class StyleConfig:
     # Padding from the text to the the pill border
