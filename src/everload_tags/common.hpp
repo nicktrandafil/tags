@@ -86,9 +86,9 @@ struct Style : StyleConfig {
     }
 
     template <std::ranges::output_range<Tag> Range>
-    void calcRects(QPoint& lt, Range&& tags, QFontMetrics const& fm,
-                   std::optional<QRect> const& fit = std::nullopt) const {
-        calcRects(lt, tags, *this, fm, fit, true);
+    void calcRects(QPoint& lt, Range&& tags, QFontMetrics const& fm, std::optional<QRect> const& fit = std::nullopt,
+                   bool has_cross = true) const {
+        calcRects(lt, tags, *this, fm, fit, has_cross);
     }
 
     template <std::ranges::input_range Range>
@@ -124,8 +124,9 @@ struct Style : StyleConfig {
     }
 
     template <std::ranges::input_range Range>
-    void drawTags(QPainter& p, Range&& tags, QFontMetrics const& fm, QPoint const& offset) const {
-        drawTags(p, tags, *this, fm, offset, true);
+    void drawTags(QPainter& p, Range&& tags, QFontMetrics const& fm, QPoint const& offset,
+                  bool has_cross = true) const {
+        drawTags(p, tags, *this, fm, offset, has_cross);
     }
 };
 
@@ -160,12 +161,8 @@ struct State {
         return tags[editing_index].text;
     }
 
-    bool cursorVisible() const {
-        return blink_timer;
-    }
-
     void updateCursorBlinking(QObject* ifce) {
-        setCursorVisible(cursorVisible(), ifce);
+        setCursorVisible(blink_timer, ifce);
     }
 
     void updateDisplayText() {
@@ -349,6 +346,10 @@ struct Common : Style, Behavior, State {
         this->tags.push_back(Tag{});
         editing_index = this->tags.size() - 1;
         moveCursor(0, false);
+    }
+
+    bool cursorVisible() const {
+        return !read_only && blink_timer;
     }
 };
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>409</width>
+    <height>626</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,19 +15,74 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>QLineEdit:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QLineEdit" name="lineEdit"/>
    </item>
    <item>
-    <widget class="everload_tags::TagsLineEdit" name="widget" native="true"/>
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>TagsLineEdit:</string>
+     </property>
+    </widget>
    </item>
    <item>
-    <widget class="everload_tags::TagsEdit" name="widget_2" native="true"/>
+    <widget class="everload_tags::TagsLineEdit" name="le" native="true"/>
    </item>
    <item>
-    <widget class="everload_tags::TagsLineEdit" name="widget_3" native="true"/>
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>TagsLineEdit (read only):</string>
+     </property>
+    </widget>
    </item>
    <item>
-    <widget class="everload_tags::TagsEdit" name="widget_4" native="true"/>
+    <widget class="everload_tags::TagsLineEdit" name="ro" native="true"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>TagsLineEdit (custom style):</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="everload_tags::TagsLineEdit" name="tl_custom_style" native="true"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>TagsEdit (restore cursor pos|non-unique):</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="everload_tags::TagsEdit" name="te" native="true"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>TagsEdit (custom style):</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="everload_tags::TagsEdit" name="te_custom_style" native="true"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>TagsEdit (read only)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="everload_tags::TagsEdit" name="te_ro" native="true"/>
    </item>
   </layout>
  </widget>

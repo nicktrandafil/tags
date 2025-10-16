@@ -92,6 +92,7 @@ struct BehaviorConfig {
     /// Maintain only unique tags
     bool unique = true;
     bool restore_cursor_position_on_focus_click = false;
+    bool read_only = false;
 };
 
 struct Config {

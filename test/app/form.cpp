@@ -3,6 +3,7 @@
 #include "ui_form.h"
 
 #include <QFontMetrics>
+#include <QLabel>
 #include <QPainter>
 #include <QPoint>
 
@@ -57,30 +58,43 @@ Form::Form(QWidget* parent) : QWidget(parent), ui(new Ui::Form) {
 
     {
         auto const tags = settings.value(line_tags).value<QVector<QString>>();
-        ui->widget->tags(vector<QString>{tags.begin(), tags.end()});
+        ui->le->tags(vector<QString>{tags.begin(), tags.end()});
     }
 
     {
-        auto const tags = settings.value(box_tags).value<QVector<QString>>();
-        ui->widget_2->tags(vector<QString>{tags.begin(), tags.end()});
-        ui->widget_2->config(Config{.behavior = behavior});
+        auto const tags = settings.value(line_tags).value<QVector<QString>>();
+        ui->ro->config(Config{.behavior = BehaviorConfig{.read_only = true}});
+        ui->ro->tags(vector<QString>{tags.begin(), tags.end()});
     }
 
     {
         auto const tags = settings.value(line_tags2).value<QVector<QString>>();
-        ui->widget_3->tags(vector<QString>{tags.begin(), tags.end()});
-        ui->widget_3->config(Config{.style = style});
+        ui->tl_custom_style->tags(vector<QString>{tags.begin(), tags.end()});
+        ui->tl_custom_style->config(Config{.style = style});
+    }
+
+    {
+        auto const tags = settings.value(box_tags).value<QVector<QString>>();
+        ui->te->tags(vector<QString>{tags.begin(), tags.end()});
+        ui->te->config(Config{.behavior = behavior});
     }
 
     {
         auto const tags = settings.value(box_tags2).value<QVector<QString>>();
-        ui->widget_4->tags(vector<QString>{tags.begin(), tags.end()});
-        ui->widget_4->config(Config{.style = style});
+        ui->te_custom_style->tags(vector<QString>{tags.begin(), tags.end()});
+        ui->te_custom_style->config(Config{.style = style});
 
         auto widget_5 = new MyWidget(this);
         ranges::transform(tags, back_inserter(widget_5->tags),
                           [](auto const& str) { return Tag{.text = str, .rect = {}}; });
+        ui->verticalLayout->addWidget(new QLabel{"MyWidget (uses calcRects() and drawTags()):"});
         ui->verticalLayout->addWidget(widget_5);
+    }
+
+    {
+        auto const tags = settings.value(box_tags2).value<QVector<QString>>();
+        ui->te_ro->tags(vector<QString>{tags.begin(), tags.end()});
+        ui->te_ro->config(Config{.behavior = BehaviorConfig{.read_only = true}});
     }
 }
 
@@ -93,22 +107,22 @@ void Form::closeEvent(QCloseEvent* e) {
     QSettings settings;
 
     {
-        auto const tags = ui->widget->tags();
+        auto const tags = ui->le->tags();
         settings.setValue(line_tags, QVector<QString>(tags.begin(), tags.end()));
     }
 
     {
-        auto const tags = ui->widget_2->tags();
+        auto const tags = ui->te->tags();
         settings.setValue(box_tags, QVector<QString>(tags.begin(), tags.end()));
     }
 
     {
-        auto const tags = ui->widget_3->tags();
+        auto const tags = ui->tl_custom_style->tags();
         settings.setValue(line_tags2, QVector<QString>(tags.begin(), tags.end()));
     }
 
     {
-        auto const tags = ui->widget_4->tags();
+        auto const tags = ui->te_custom_style->tags();
         settings.setValue(box_tags2, QVector<QString>(tags.begin(), tags.end()));
     }
 }
