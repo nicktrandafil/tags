@@ -53,7 +53,7 @@ struct TagsEdit::Impl : Common {
 
     template <std::ranges::input_range Range>
     void drawTags(QPainter& p, Range range) const {
-        drawTags(p, range, ifce->fontMetrics(), -offset());
+        drawTags(p, range, ifce->fontMetrics(), -offset(), !read_only);
     }
 
     void setEditorText(QString const& text) {
@@ -73,13 +73,13 @@ struct TagsEdit::Impl : Common {
     void calcRects(QRect r, QPoint& lt, QFontMetrics const& fm) {
         auto const middle = tags.begin() + static_cast<ptrdiff_t>(editing_index);
 
-        calcRects(lt, std::ranges::subrange(tags.begin(), middle), fm, r);
+        calcRects(lt, std::ranges::subrange(tags.begin(), middle), fm, r, !read_only);
 
         if (cursorVisible() || !editorText().isEmpty()) {
-            calcRects(lt, std::ranges::subrange(middle, middle + 1), fm, r);
+            calcRects(lt, std::ranges::subrange(middle, middle + 1), fm, r, !read_only);
         }
 
-        calcRects(lt, std::ranges::subrange(middle + 1, tags.end()), fm, r);
+        calcRects(lt, std::ranges::subrange(middle + 1, tags.end()), fm, r, !read_only);
     }
 
     QRect calcRects(QRect r) {
@@ -252,7 +252,6 @@ void TagsEdit::paintEvent(QPaintEvent* e) {
     // tags
     impl->drawTags(p, std::ranges::subrange(impl->tags.cbegin(), middle));
 
-    // todo: draw in one round all if the editor is inactive else, have this 3-part drawing.
     if (impl->cursorVisible()) {
         impl->drawEditor(p, palette(), impl->offset());
     } else if (!impl->editorText().isEmpty()) {
@@ -349,6 +348,10 @@ int TagsEdit::heightForWidth(int w) const {
 }
 
 void TagsEdit::keyPressEvent(QKeyEvent* event) {
+    if (impl->read_only) {
+        return;
+    }
+
     if (event == QKeySequence::SelectAll) {
         impl->selectAll();
     } else if (event == QKeySequence::SelectPreviousChar) {
@@ -459,10 +462,11 @@ void TagsEdit::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void TagsEdit::config(Config config) {
-    static_cast<StyleConfig&>(*impl) = config.style;
     if (impl->unique && impl->unique != config.behavior.unique) {
         impl->removeDuplicates();
     }
+    static_cast<StyleConfig&>(*impl) = config.style;
+    static_cast<BehaviorConfig&>(*impl) = config.behavior;
     impl->update1();
 }
 

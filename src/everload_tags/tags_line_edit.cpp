@@ -54,7 +54,7 @@ struct TagsLineEdit::Impl : Common {
 
     template <std::ranges::input_range Range>
     void drawTags(QPainter& p, Range range) const {
-        drawTags(p, range, ifce->fontMetrics(), -offset());
+        drawTags(p, range, ifce->fontMetrics(), -offset(), !read_only);
     }
 
     QRect contentsRect() const {
@@ -69,13 +69,13 @@ struct TagsLineEdit::Impl : Common {
 
         auto const middle = tags.begin() + static_cast<ptrdiff_t>(editing_index);
 
-        calcRects(lt, std::ranges::subrange(tags.begin(), middle), ifce->fontMetrics());
+        calcRects(lt, std::ranges::subrange(tags.begin(), middle), ifce->fontMetrics(), std::nullopt, !read_only);
 
         if (cursorVisible() || !editorText().isEmpty()) {
-            calcRects(lt, std::ranges::subrange(middle, middle + 1), ifce->fontMetrics());
+            calcRects(lt, std::ranges::subrange(middle, middle + 1), ifce->fontMetrics(), std::nullopt, !read_only);
         }
 
-        calcRects(lt, std::ranges::subrange(middle + 1, tags.end()), ifce->fontMetrics());
+        calcRects(lt, std::ranges::subrange(middle + 1, tags.end()), ifce->fontMetrics(), std::nullopt, !read_only);
     }
 
     void setEditorText(QString const& text) {
@@ -226,7 +226,6 @@ void TagsLineEdit::paintEvent(QPaintEvent* e) {
     // tags
     impl->drawTags(p, std::ranges::subrange(impl->tags.cbegin(), middle));
 
-    // todo: draw in one round all if the editor is inactive else, have this 3-part drawing.
     if (impl->cursorVisible()) {
         impl->drawEditor(p, palette(), impl->offset());
     } else if (!impl->editorText().isEmpty()) {
@@ -247,7 +246,7 @@ void TagsLineEdit::timerEvent(QTimerEvent* event) {
 void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
     // we don't want to change cursor position if this event is part of focusIn
     using namespace std::chrono_literals;
-    if (impl->restore_cursor_position_on_focus_click && elapsed(impl->focused_at) < 1ms) {
+    if (impl->read_only || (impl->restore_cursor_position_on_focus_click && elapsed(impl->focused_at) < 1ms)) {
         return;
     }
 
@@ -321,6 +320,10 @@ QSize TagsLineEdit::minimumSizeHint() const {
 }
 
 void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
+    if (impl->read_only) {
+        return;
+    }
+
     if (event == QKeySequence::SelectAll) {
         impl->selectAll();
     } else if (event == QKeySequence::SelectPreviousChar) {
@@ -433,10 +436,11 @@ void TagsLineEdit::wheelEvent(QWheelEvent* event) {
 }
 
 void TagsLineEdit::config(Config config) {
-    static_cast<StyleConfig&>(*impl) = config.style;
     if (impl->unique && impl->unique != config.behavior.unique) {
         impl->removeDuplicates();
     }
+    static_cast<StyleConfig&>(*impl) = config.style;
+    static_cast<BehaviorConfig&>(*impl) = config.behavior;
     impl->update1();
 }
 
