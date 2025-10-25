@@ -187,7 +187,9 @@ void TagsLineEdit::focusInEvent(QFocusEvent* e) {
     impl->updateDisplayText();
     impl->calcRects();
     impl->updateHScrollRange();
-    impl->ensureCursorIsVisible();
+    if (e->reason() != Qt::FocusReason::MouseFocusReason || impl->restore_cursor_position_on_focus_click) {
+        impl->ensureCursorIsVisible();
+    }
     update();
 }
 
