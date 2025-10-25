@@ -225,8 +225,10 @@ void TagsEdit::focusInEvent(QFocusEvent* event) {
     impl->setCursorVisible(true, this);
     impl->updateDisplayText();
     impl->calcRectsUpdateScrollRanges();
-    impl->ensureCursorIsVisibleH();
-    impl->ensureCursorIsVisibleV();
+    if (event->reason() != Qt::FocusReason::MouseFocusReason || impl->restore_cursor_position_on_focus_click) {
+        impl->ensureCursorIsVisibleH();
+        impl->ensureCursorIsVisibleV();
+    }
     viewport()->update();
 }
 
@@ -302,7 +304,7 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
         return;
     }
 
-    // add new tag closed to the cursor
+    // add new tag closest to the cursor
     for (auto it = begin(impl->tags); it != end(impl->tags); ++it) {
         // find the row
         if (it->rect.translated(-impl->offset()).bottom() < event->pos().y()) {
