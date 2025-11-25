@@ -5,7 +5,7 @@
 
 A widget (Qt5/Qt6) for tag editing
 
-![Examples](screenshot/examples.png)
+<img src="screenshot/examples.png" width="60%">
 
 Python instructions:
 
