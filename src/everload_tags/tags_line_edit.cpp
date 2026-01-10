@@ -42,6 +42,8 @@
 
 namespace everload_tags {
 
+inline constexpr QMargins magic_margins = {2, 2, 2, 3};
+
 struct TagsLineEdit::Impl : Common {
     explicit Impl(TagsLineEdit* const& ifce, Config config)
         : Common{{config.style}, {config.behavior}, {}}, ifce{ifce} {}
@@ -148,7 +150,7 @@ struct TagsLineEdit::Impl : Common {
         assert(option);
         option->initFrom(ifce);
         option->rect = ifce->contentsRect();
-        option->lineWidth = ifce->style()->pixelMetric(QStyle::PM_DefaultFrameWidth, option, ifce);
+        option->lineWidth = 1;
         option->midLineWidth = 0;
         option->state |= QStyle::State_Sunken;
         option->features = QStyleOptionFrame::None;
