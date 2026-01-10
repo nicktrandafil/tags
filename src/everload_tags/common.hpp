@@ -352,9 +352,6 @@ struct Common : Style, Behavior, State {
     }
 };
 
-// ?
-inline constexpr QMargins magic_margins = {2, 2, 2, 2};
-
 /// \ref `bool QInputControl::isAcceptableInput(QKeyEvent const* event) const`
 inline bool isAcceptableInput(QKeyEvent const& event) {
     auto const text = event.text();
