@@ -153,6 +153,9 @@ struct TagsLineEdit::Impl : Common {
         option->lineWidth = 1;
         option->midLineWidth = 0;
         option->state |= QStyle::State_Sunken;
+        if (ifce->underMouse()) {
+            option->state |= QStyle::State_MouseOver;
+        }
         option->features = QStyleOptionFrame::None;
     }
 
@@ -169,6 +172,7 @@ TagsLineEdit::TagsLineEdit(QWidget* parent, Config config)
     setFocusPolicy(Qt::StrongFocus);
     setCursor(Qt::IBeamCursor);
     setAttribute(Qt::WA_InputMethodEnabled, true);
+    setAttribute(Qt::WA_Hover, true);
     setMouseTracking(true);
 
     impl->setupCompleter();
