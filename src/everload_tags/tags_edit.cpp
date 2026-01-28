@@ -53,7 +53,8 @@ struct TagsEdit::Impl : Common {
 
     template <std::ranges::input_range Range>
     void drawTags(QPainter& p, Range range) const {
-        drawTags(p, range, ifce->fontMetrics(), -offset(), !read_only);
+        drawTags(p, range, ifce->fontMetrics(), -offset(),
+                 !read_only && (!restore_cursor_position_on_focus_click || ifce->hasFocus()));
     }
 
     void setEditorText(QString const& text) {

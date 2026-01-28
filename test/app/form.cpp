@@ -70,7 +70,7 @@ Form::Form(QWidget* parent) : QWidget(parent), ui(new Ui::Form) {
     {
         auto const tags = settings.value(line_tags2).value<QVector<QString>>();
         ui->tl_custom_style->tags(vector<QString>{tags.begin(), tags.end()});
-        ui->tl_custom_style->config(Config{.style = style});
+        ui->tl_custom_style->config(Config{.style = style, .behavior = behavior});
     }
 
     {

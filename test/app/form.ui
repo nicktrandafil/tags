@@ -47,7 +47,7 @@
    <item>
     <widget class="QLabel" name="label_4">
      <property name="text">
-      <string>TagsLineEdit (custom style):</string>
+      <string>TagsLineEdit (custom style | restore cursor pos | non-unique):</string>
      </property>
     </widget>
    </item>
