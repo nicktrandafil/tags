@@ -32,6 +32,8 @@
 #include <QSize>
 
 #include <optional>
+#include <sstream>
+#include <string>
 #include <vector>
 
 namespace everload_tags {
@@ -86,6 +88,26 @@ struct StyleConfig {
 
     void drawTags(QPainter& p, std::vector<Tag> const& tags, QFontMetrics const& fm, QPoint const& translate,
                   bool has_cross) const;
+
+    std::string debugString() const {
+        std::ostringstream os;
+        os << "StyleConfig{"
+           << "pill_thickness: "
+           << "QMargins{"
+           << "left: " << pill_thickness.left() << "; "
+           << "top: " << pill_thickness.top() << "; "
+           << "right: " << pill_thickness.right() << "; "
+           << "bottom: " << pill_thickness.bottom() << "}; "
+           << "pills_h_spacing: " << pills_h_spacing << "; "
+           << "tag_v_spacing: " << tag_v_spacing << "; "
+           << "tag_cross_size: " << tag_cross_size << "; "
+           << "tag_cross_spacing: " << tag_cross_spacing << "; "
+           << "color: rgba(" << color.red() << ", " << color.green() << ", " << color.blue() << ", " << color.alpha()
+           << "); "
+           << "rounding_x_radius: " << rounding_x_radius << "; "
+           << "rounding_y_radius: " << rounding_y_radius << "}";
+        return os.str();
+    }
 };
 
 struct BehaviorConfig {
@@ -93,6 +115,15 @@ struct BehaviorConfig {
     bool unique = true;
     bool restore_cursor_position_on_focus_click = false;
     bool read_only = false;
+
+    std::string debugString() const {
+        std::ostringstream os;
+        os << "BehaviorConfig{"
+           << "unique: " << unique << "; "
+           << "restore_cursor_position_on_focus_click: " << restore_cursor_position_on_focus_click << "; "
+           << "read_only: " << read_only << "}";
+        return os.str();
+    }
 };
 
 struct Config {
