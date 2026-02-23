@@ -48,11 +48,13 @@ Form::Form(QWidget* parent) : QWidget(parent), ui(new Ui::Form) {
         .rounding_x_radius = 5,
         .rounding_y_radius = 10,
     };
+    qDebug() << style.debugString().c_str();
 
     BehaviorConfig behavior{
         .unique = false,
         .restore_cursor_position_on_focus_click = true,
     };
+    qDebug() << behavior.debugString().c_str();
 
     QSettings settings;
 
