@@ -334,7 +334,7 @@ struct Common : Style, Behavior, State {
         }
     }
 
-    void setTags(std::vector<QString> const& tags) {
+    void setTags(std::ranges::forward_range auto const& tags) {
         std::unordered_set<QString> unique_tags;
         std::vector<Tag> t;
         for (auto const& x : tags) {
@@ -346,6 +346,15 @@ struct Common : Style, Behavior, State {
         this->tags.push_back(Tag{});
         editing_index = this->tags.size() - 1;
         moveCursor(0, false);
+    }
+
+    template <class T>
+    void getTags(T& out) {
+        out.resize(tags.size());
+        std::transform(tags.begin(), tags.end(), out.begin(), [](auto const& tag) { return tag.text; });
+        if (editorText().isEmpty() || (unique && std::count(out.begin(), out.end(), editorText()) > 1)) {
+            out.erase(out.begin() + static_cast<ptrdiff_t>(editing_index));
+        }
     }
 
     bool cursorVisible() const {
