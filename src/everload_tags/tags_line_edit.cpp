@@ -409,17 +409,30 @@ void TagsLineEdit::completion(std::vector<QString> const& completions) {
     impl->setupCompleter();
 }
 
+void TagsLineEdit::completion(QStringList const& completions) {
+    impl->completer = std::make_unique<QCompleter>(completions);
+    impl->setupCompleter();
+}
+
 void TagsLineEdit::tags(std::vector<QString> const& tags) {
     impl->setTags(tags);
     impl->update1();
 }
 
+void TagsLineEdit::tags(QStringList const& tags) {
+    impl->setTags(tags);
+    impl->update1();
+}
+
 std::vector<QString> TagsLineEdit::tags() const {
-    std::vector<QString> ret(impl->tags.size());
-    std::transform(impl->tags.begin(), impl->tags.end(), ret.begin(), [](auto const& tag) { return tag.text; });
-    if (impl->editorText().isEmpty() || (impl->unique && 1 < std::count(ret.begin(), ret.end(), impl->editorText()))) {
-        ret.erase(ret.begin() + static_cast<ptrdiff_t>(impl->editing_index));
-    }
+    std::vector<QString> ret;
+    impl->getTags(ret);
+    return ret;
+}
+
+QStringList TagsLineEdit::tags2() const {
+    QStringList ret;
+    impl->getTags(ret);
     return ret;
 }
 

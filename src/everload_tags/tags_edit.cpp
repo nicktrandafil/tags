@@ -433,18 +433,30 @@ void TagsEdit::completion(std::vector<QString> const& completions) {
     impl->setupCompleter();
 }
 
+void TagsEdit::completion(QStringList const& completions) {
+    impl->completer = std::make_unique<QCompleter>(completions);
+    impl->setupCompleter();
+}
+
 void TagsEdit::tags(std::vector<QString> const& tags) {
     impl->setTags(tags);
     impl->update1();
 }
 
+void TagsEdit::tags(QStringList const& tags) {
+    impl->setTags(tags);
+    impl->update1();
+}
+
 std::vector<QString> TagsEdit::tags() const {
-    std::vector<QString> ret(impl->tags.size());
-    std::transform(impl->tags.begin(), impl->tags.end(), ret.begin(), [](Tag const& tag) { return tag.text; });
-    assert(!ret.empty()); // Invariant-1
-    if (ret[impl->editing_index].isEmpty() || (impl->unique && impl->isCurrentTagADuplicate())) {
-        ret.erase(ret.begin() + static_cast<std::ptrdiff_t>(impl->editing_index));
-    }
+    std::vector<QString> ret;
+    impl->getTags(ret);
+    return ret;
+}
+
+QStringList TagsEdit::tags2() const {
+    QStringList ret;
+    impl->getTags(ret);
     return ret;
 }
 

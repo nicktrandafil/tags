@@ -50,12 +50,15 @@ public:
 
     /// Set completions
     void completion(std::vector<QString> const& completions);
+    void completion(QStringList const& completions);
 
     /// Set tags
     void tags(std::vector<QString> const& tags);
+    void tags(QStringList const& tags);
 
     /// Get tags
     std::vector<QString> tags() const;
+    QStringList tags2() const;
 
     /// Set config
     void config(Config config);
