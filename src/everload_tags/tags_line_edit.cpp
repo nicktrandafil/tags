@@ -123,6 +123,7 @@ struct TagsLineEdit::Impl : Common {
         hscroll = std::clamp(hscroll, hscroll_min, hscroll_max);
     }
 
+    // scroll to the cursor
     void ensureCursorIsVisible() {
         auto const contents_rect = contentsRect().translated(offset());
         int const cursor_x = (editorRect() - pill_thickness).left() + qRound(cursorToX());
@@ -136,6 +137,7 @@ struct TagsLineEdit::Impl : Common {
         hscroll = std::clamp(hscroll, hscroll_min, hscroll_max);
     }
 
+    // scrolls to the cursor if `keep_cursor_visible`
     void update1(bool keep_cursor_visible = true) {
         updateDisplayText();
         calcRects();
@@ -262,26 +264,18 @@ void TagsLineEdit::mousePressEvent(QMouseEvent* event) {
         impl->update1(keep_cursor_visible);
     };
 
-    // remove or edit a tag
-    for (size_t i = 0; i < impl->tags.size(); ++i) {
-        if (!impl->tags[i].rect.translated(-impl->offset()).contains(event->pos())) {
-            continue;
-        }
-
-        if (impl->inCrossArea(i, event->pos(), impl->offset())) {
-            impl->removeTag(i);
-            keep_cursor_visible = false;
-        } else if (impl->editing_index == i) {
-            impl->moveCursor(
-                impl->text_layout.lineAt(0).xToCursor(
-                    (event->pos() - (impl->editorRect() - impl->pill_thickness).translated(-impl->offset()).topLeft())
-                        .x()),
-                false);
-        } else {
-            impl->editTag(i);
-        }
-
+    switch (impl->handleClick(event, impl->offset())) {
+        using enum Impl::HandleClickResult;
+    case removed_a_tag:
+        keep_cursor_visible = false;
         return;
+    case moved_cursor_in_a_tag:
+        // keep cursor visible because the cursor can be at the border, we need to enlarge the space around it;
+    case moved_cursor_across_tags:
+        // keep the cursor visible because it can move out of the view
+        return;
+    case unhandled:
+        break;
     }
 
     // add new tag closed to the cursor
@@ -340,28 +334,28 @@ void TagsLineEdit::keyPressEvent(QKeyEvent* event) {
     } else {
         switch (event->key()) {
         case Qt::Key_Left:
-            if (impl->cursor == 0) {
+            if (event->modifiers() == Qt::ControlModifier || impl->cursor == 0) {
                 impl->editPreviousTag();
             } else {
                 impl->moveCursor(impl->text_layout.previousCursorPosition(impl->cursor), false);
             }
             break;
         case Qt::Key_Right:
-            if (impl->cursor == impl->editorText().size()) {
+            if (event->modifiers() == Qt::ControlModifier || impl->cursor == impl->editorText().size()) {
                 impl->editNextTag();
             } else {
                 impl->moveCursor(impl->text_layout.nextCursorPosition(impl->cursor), false);
             }
             break;
         case Qt::Key_Home:
-            if (impl->cursor == 0) {
+            if (event->modifiers() == Qt::ControlModifier) {
                 impl->editTag(0);
             } else {
                 impl->moveCursor(0, false);
             }
             break;
         case Qt::Key_End:
-            if (impl->cursor == impl->editorText().size()) {
+            if (event->modifiers() == Qt::ControlModifier) {
                 impl->editTag(impl->tags.size() - 1);
             } else {
                 impl->moveCursor(impl->editorText().length(), false);

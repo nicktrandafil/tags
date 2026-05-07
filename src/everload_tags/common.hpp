@@ -360,6 +360,37 @@ struct Common : Style, Behavior, State {
     bool cursorVisible() const {
         return !read_only && blink_timer;
     }
+
+    enum class HandleClickResult {
+        unhandled,
+        removed_a_tag,
+        moved_cursor_in_a_tag,
+        moved_cursor_across_tags,
+    };
+
+    HandleClickResult handleClick(QMouseEvent* event, QPoint const& offset) {
+        auto const it = std::find_if(begin(tags), end(tags), [&](auto const& tag) {
+            return tag.rect.translated(-offset).contains(event->pos());
+        });
+        if (it != end(tags)) {
+            auto const i = static_cast<size_t>(std::distance(begin(tags), it));
+
+            if (inCrossArea(i, event->pos(), offset)) {
+                removeTag(i);
+                return HandleClickResult::removed_a_tag;
+            } else if (editing_index == i) {
+                moveCursor(text_layout.lineAt(0).xToCursor(
+                               (event->pos() - (editorRect() - pill_thickness).translated(-offset).topLeft()).x()),
+                           false);
+                return HandleClickResult::moved_cursor_in_a_tag;
+            } else {
+                editTag(i);
+                return HandleClickResult::moved_cursor_across_tags;
+            }
+        }
+
+        return HandleClickResult::unhandled;
+    }
 };
 
 /// \ref `bool QInputControl::isAcceptableInput(QKeyEvent const* event) const`

@@ -282,26 +282,18 @@ void TagsEdit::mousePressEvent(QMouseEvent* event) {
         impl->update1(keep_cursor_visible);
     };
 
-    // remove or edit a tag
-    for (size_t i = 0; i < impl->tags.size(); ++i) {
-        if (!impl->tags[i].rect.translated(-impl->offset()).contains(event->pos())) {
-            continue;
-        }
-
-        if (impl->inCrossArea(i, event->pos(), impl->offset())) {
-            impl->removeTag(i);
-            keep_cursor_visible = false;
-        } else if (impl->editing_index == i) {
-            impl->moveCursor(
-                impl->text_layout.lineAt(0).xToCursor(
-                    (event->pos() - (impl->editorRect() - impl->pill_thickness).translated(-impl->offset()).topLeft())
-                        .x()),
-                false);
-        } else {
-            impl->editTag(i);
-        }
-
+    switch (impl->handleClick(event, impl->offset())) {
+        using enum Impl::HandleClickResult;
+    case removed_a_tag:
+        keep_cursor_visible = false;
         return;
+    case moved_cursor_in_a_tag:
+        // keep cursor visible because the cursor can be at the border, we need to enlarge the space around it;
+    case moved_cursor_across_tags:
+        // keep the cursor visible because it can move out of the view
+        return;
+    case unhandled:
+        break;
     }
 
     // add new tag closest to the cursor
@@ -362,28 +354,50 @@ void TagsEdit::keyPressEvent(QKeyEvent* event) {
     } else {
         switch (event->key()) {
         case Qt::Key_Left:
-            if (impl->cursor == 0) {
+            if (event->modifiers() == Qt::ControlModifier || impl->cursor == 0) {
                 impl->editPreviousTag();
             } else {
                 impl->moveCursor(impl->text_layout.previousCursorPosition(impl->cursor), false);
             }
             break;
         case Qt::Key_Right:
-            if (impl->cursor == impl->editorText().size()) {
+            if (event->modifiers() == Qt::ControlModifier || impl->cursor == impl->editorText().size()) {
                 impl->editNextTag();
             } else {
                 impl->moveCursor(impl->text_layout.nextCursorPosition(impl->cursor), false);
             }
             break;
+        case Qt::Key_Up: {
+            auto const before = impl->tags | std::views::take(impl->editing_index);
+            auto const it = std::ranges::find_if(before, [&](auto const& tag) {
+                return impl->editorRect()
+                    .translated(0, -impl->tag_v_spacing - fontMetrics().height())
+                    .intersects(tag.rect);
+            });
+            if (it != end(before)) {
+                impl->editTag(std::distance(begin(before), it));
+            }
+        } break;
+        case Qt::Key_Down: {
+            auto const after = impl->tags | std::views::drop(impl->editing_index + 1);
+            auto const it = std::ranges::find_if(after, [&](auto const& tag) {
+                return impl->editorRect()
+                    .translated(0, impl->tag_v_spacing + fontMetrics().height())
+                    .intersects(tag.rect);
+            });
+            if (it != end(after)) {
+                impl->editTag(impl->editing_index + 1 + std::distance(begin(after), it));
+            }
+        } break;
         case Qt::Key_Home:
-            if (impl->cursor == 0) {
+            if (event->modifiers() == Qt::ControlModifier) {
                 impl->editTag(0);
             } else {
                 impl->moveCursor(0, false);
             }
             break;
         case Qt::Key_End:
-            if (impl->cursor == impl->editorText().size()) {
+            if (event->modifiers() == Qt::ControlModifier) {
                 impl->editTag(impl->tags.size() - 1);
             } else {
                 impl->moveCursor(impl->editorText().length(), false);
